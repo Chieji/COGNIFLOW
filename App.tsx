@@ -367,6 +367,54 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   }, [notes, folders, connections, settings, patches, featureFlags, auditLog]);
 
+  const onImport = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const result = event.target?.result;
+                if (typeof result !== 'string') {
+                    throw new Error("File could not be read.");
+                }
+                const data = JSON.parse(result);
+                
+                const defaultSettings: AiSettings = {
+                    tasks: { chat: { provider: 'gemini' }, summary: { provider: 'gemini' }, translation: { provider: 'gemini' } },
+                    keys: { gemini: '', openai: '', anthropic: '', openrouter: '', groq: '', huggingface: '' },
+                    huggingface: { modelId: 'mistralai/Mistral-7B-Instruct-v0.2' },
+                };
+
+                // Basic validation
+                if (!data.notes || !data.folders || !data.settings) {
+                    throw new Error("Invalid Cogniflow export file format.");
+                }
+
+                if (window.confirm("This will replace all your current data. This action cannot be undone. Are you sure you want to continue?")) {
+                    setNotes(data.notes || []);
+                    setFolders(data.folders || []);
+                    setConnections(data.connections || []);
+                    setSettings(data.settings || defaultSettings);
+                    setPatches(data.patches || []);
+                    setFeatureFlags(data.featureFlags || []);
+                    setAuditLog(data.auditLog || []);
+                    alert("Data imported successfully!");
+                }
+            } catch (error) {
+                console.error("Failed to import data:", error);
+                alert(`Error importing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+  }, []);
+
   const activeNote = useMemo(() => notes.find(note => note.id === activeNoteId), [notes, activeNoteId]);
   
   const filteredNotes = useMemo(() => {
@@ -390,6 +438,7 @@ const App: React.FC = () => {
         setActiveFolderId={setActiveFolderId}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onExport={onExport}
+        onImport={onImport}
         reorderFolders={reorderFolders}
       />
       <main className="flex-1 flex flex-col min-w-0">

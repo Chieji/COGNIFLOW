@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Theme, Folder, Note } from '../types';
-import { EditIcon, GraphIcon, SunIcon, MoonIcon, PlusIcon, SettingsIcon, FolderIcon, ChevronDownIcon, MessageSquareIcon, DownloadIcon, StarIcon, GitBranchIcon, SearchIcon, RssIcon, MailIcon, TagIcon, ListIcon } from './icons';
+import { EditIcon, GraphIcon, SunIcon, MoonIcon, PlusIcon, SettingsIcon, FolderIcon, ChevronDownIcon, MessageSquareIcon, DownloadIcon, UploadIcon, GitBranchIcon, SearchIcon, RssIcon, MailIcon, TagIcon, ListIcon } from './icons';
 
 interface SidebarProps {
   view: View;
@@ -15,20 +15,25 @@ interface SidebarProps {
   setActiveFolderId: (id: string | null) => void;
   onOpenSettings: () => void;
   onExport: () => void;
+  onImport: () => void;
   reorderFolders: (draggedId: string, targetId: string) => void;
 }
 
 const Logo = () => (
-    <img 
-        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAACXBIWXMAACE4AAAhOAFFljFgAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AAAPJSURBVHic7dJBDQAgDAAxtI+9QY+gU70xJ4cC/7f5HwMAgP4nAQCAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAALwA0w4AAbJbT/cAAAAASUVORK5CYII=" 
-        alt="Cogniflow Logo" 
-        className="w-8 h-8 flex-shrink-0"
-    />
+    <svg className="w-8 h-8 text-light-accent dark:text-dark-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2a10 10 0 1 0 10 10" />
+      <path d="M12 2a10 10 0 1 0-5.5 18.33" />
+      <path d="M12 2a10 10 0 1 1-5.5 18.33" />
+      <path d="M2 12a10 10 0 1 1 10 10" />
+      <path d="M2 12a10 10 0 1 0 10-10" />
+      <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+    </svg>
 );
+
 
 const Sidebar: React.FC<SidebarProps> = ({ 
     view, setView, theme, setTheme, createNewNote, folders, notes, addFolder, 
-    activeFolderId, setActiveFolderId, onOpenSettings, onExport, reorderFolders 
+    activeFolderId, setActiveFolderId, onOpenSettings, onExport, onImport, reorderFolders 
 }) => {
   const [isFoldersExpanded, setIsFoldersExpanded] = useState(true);
   const [isTagsExpanded, setIsTagsExpanded] = useState(false);
@@ -193,6 +198,20 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       <div className="w-full mt-auto text-sm">
+        <button 
+            onClick={onImport}
+            className="flex items-center w-full p-2 my-1 rounded-lg transition-colors hover:bg-light-secondary dark:hover:bg-dark-primary"
+        >
+            <UploadIcon className="w-5 h-5 flex-shrink-0" />
+            <span className="ml-4 font-semibold">Import Data</span>
+        </button>
+        <button 
+            onClick={onExport}
+            className="flex items-center w-full p-2 my-1 rounded-lg transition-colors hover:bg-light-secondary dark:hover:bg-dark-primary"
+        >
+            <DownloadIcon className="w-5 h-5 flex-shrink-0" />
+            <span className="ml-4 font-semibold">Export Data</span>
+        </button>
         <button 
             onClick={onOpenSettings}
             className="flex items-center w-full p-2 my-1 rounded-lg transition-colors hover:bg-light-secondary dark:hover:bg-dark-primary"

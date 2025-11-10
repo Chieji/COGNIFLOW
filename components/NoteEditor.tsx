@@ -60,6 +60,15 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote }) =
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
+    
+    if (files.length > 1) {
+        if (!window.confirm(`You are about to upload ${files.length} files. Do you want to proceed?`)) {
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            return;
+        }
+    }
 
     const newAttachments: Omit<Attachment, 'id'>[] = [];
     let processedFiles = 0;
