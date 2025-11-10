@@ -1,5 +1,5 @@
 // FIX: Removed FunctionDeclarationSchema from import as it is not an exported member.
-import { GoogleGenAI, Type, FunctionDeclaration, Modality } from '@google/genai';
+import { GoogleGenAI, Type, FunctionDeclaration, Modality, GenerateContentResponse } from '@google/genai';
 import { Note, Connection, Citation, AiAction, Folder } from '../types';
 
 interface SummaryAndTags {
@@ -342,7 +342,6 @@ const tools: FunctionDeclaration[] = [
     }
 ];
 
-// FIX: This function was truncated and did not return a value. It has been fully implemented.
 export const processChatTurn = async (
     history: { role: 'user' | 'model'; parts: { text: string }[] }[],
     newMessage: string,
@@ -352,8 +351,9 @@ export const processChatTurn = async (
     contextFolders: Folder[],
     onExecuteAction: (action: AiAction) => string,
     model: string,
-    thinkingBudget: number | null
-): Promise<{ text: string; citations: Citation[] }> => {
+    thinkingBudget: number | null,
+    onChunk: (text: string) => void
+): Promise<{ citations: Citation[] }> => {
     if (!apiKey) {
         throw new Error("API key for Gemini is not configured.");
     }
@@ -393,7 +393,30 @@ When asked to read notes, create or manage notes and folders, or propose code ch
             config.thinkingConfig = { thinkingBudget };
         }
         
-        let response = await ai.models.generateContent({
+        if (useWebSearch) {
+            const stream = await ai.models.generateContentStream({
+                model: model,
+                contents: fullHistory,
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                config,
+            });
+            for await (const chunk of stream) {
+                onChunk(chunk.text);
+            }
+            const finalResponse = await stream.response;
+            const citations: Citation[] = [];
+            if (finalResponse.candidates?.[0]?.groundingMetadata?.groundingChunks) {
+                for (const chunk of finalResponse.candidates[0].groundingMetadata.groundingChunks) {
+                    if (chunk.web) {
+                        citations.push({ uri: chunk.web.uri, title: chunk.web.title || chunk.web.uri });
+                    }
+                }
+            }
+            return { citations };
+        }
+        
+        // --- Tool usage flow ---
+        let response: GenerateContentResponse = await ai.models.generateContent({
             model: model,
             contents: fullHistory,
             systemInstruction: { parts: [{ text: systemInstruction }] },
@@ -421,27 +444,23 @@ When asked to read notes, create or manage notes and folders, or propose code ch
                 { role: 'user' as const, parts: toolResponseParts },
             ];
             
-            response = await ai.models.generateContent({
+            // Second call is streamed to the user
+            const stream = await ai.models.generateContentStream({
                 model: model,
                 contents: historyWithToolResponses,
                 systemInstruction: { parts: [{ text: systemInstruction }] },
                 config,
             });
-        }
-        
-        const citations: Citation[] = [];
-        if (useWebSearch && response.candidates?.[0]?.groundingMetadata?.groundingChunks) {
-            for (const chunk of response.candidates[0].groundingMetadata.groundingChunks) {
-                if (chunk.web) {
-                    citations.push({ uri: chunk.web.uri, title: chunk.web.title || chunk.web.uri });
-                }
+            for await (const chunk of stream) {
+                onChunk(chunk.text);
             }
+        } else {
+             // No tool calls, AI responded directly. Send the text in one chunk.
+             onChunk(response.text);
         }
+
+        return { citations: [] };
         
-        return {
-            text: response.text,
-            citations,
-        };
     } catch (e) {
         console.error("Error processing chat turn:", e);
         if (e instanceof Error) {

@@ -201,7 +201,14 @@ const App: React.FC = () => {
         }
         case 'create_note': {
             const { title, content, folder_id } = action.args;
-             if (folder_id && !folders.some(f => f.id === folder_id)) {
+            
+            const confirmationMessage = `The AI wants to create a new note with the following details:\n\nTitle: ${title}\n\nContent:\n${content.substring(0, 200)}${content.length > 200 ? '...' : ''}\n\nDo you want to proceed?`;
+            
+            if (!window.confirm(confirmationMessage)) {
+                return "Note creation cancelled by user.";
+            }
+
+            if (folder_id && !folders.some(f => f.id === folder_id)) {
                 return `Error: Folder with ID '${folder_id}' does not exist.`;
             }
             const newNote: Note = {

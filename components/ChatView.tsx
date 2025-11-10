@@ -84,7 +84,7 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
     if (!textToSend.trim() || isLoading) return;
 
     const userMessage: Message = { role: 'user', text: textToSend };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage, { role: 'model', text: '' }]);
     setInput('');
     setIsLoading(true);
     setError(null);
@@ -95,31 +95,70 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
     }));
 
     try {
-      let response: { text: string; citations?: Citation[] };
-      
       if (provider === 'gemini') {
         const apiKey = settings.keys.gemini;
         if (!apiKey) throw new Error("API key for Gemini is not set. Please configure it in Settings.");
         
         const model = useThinkingMode ? 'gemini-2.5-pro' : 'gemini-2.5-flash-lite';
         const thinkingBudget = useThinkingMode ? 32768 : null;
-        
-        response = await processChatTurn(historyForApi, textToSend, apiKey, useWebSearch, notes, folders, onAiAction, model, thinkingBudget);
-      } else if (provider === 'huggingface') {
-        const apiKey = settings.keys.huggingface;
-        const modelId = settings.huggingface.modelId;
-        if (!apiKey) throw new Error("API key for Hugging Face is not set.");
-        if (!modelId) throw new Error("Model ID for Hugging Face is not set.");
-        response = await processHuggingFaceChat(historyForApi, textToSend, apiKey, modelId);
-      } else {
-        throw new Error(`Provider "${providerName}" is not currently supported for chat. AI actions, note context, and web search are only available for Gemini.`);
-      }
 
-      setMessages(prev => [...prev, { role: 'model', text: response.text, citations: response.citations }]);
+        const handleChunk = (textChunk: string) => {
+            if (textChunk) {
+                setMessages(prev => {
+                    const lastMsg = prev[prev.length - 1];
+                    const updatedMsg = { ...lastMsg, text: lastMsg.text + textChunk };
+                    return [...prev.slice(0, -1), updatedMsg];
+                });
+            }
+        };
+        
+        const { citations } = await processChatTurn(
+            historyForApi, 
+            textToSend, 
+            apiKey, 
+            useWebSearch, 
+            notes, 
+            folders, 
+            onAiAction, 
+            model, 
+            thinkingBudget,
+            handleChunk
+        );
+        
+        if (citations && citations.length > 0) {
+            setMessages(prev => {
+                const lastMsg = prev[prev.length - 1];
+                const updatedMsg = { ...lastMsg, citations: citations };
+                return [...prev.slice(0, -1), updatedMsg];
+            });
+        }
+
+      } else {
+        let response: { text: string; citations?: Citation[] };
+        if (provider === 'huggingface') {
+            const apiKey = settings.keys.huggingface;
+            const modelId = settings.huggingface.modelId;
+            if (!apiKey) throw new Error("API key for Hugging Face is not set.");
+            if (!modelId) throw new Error("Model ID for Hugging Face is not set.");
+            response = await processHuggingFaceChat(historyForApi, textToSend, apiKey, modelId);
+        } else {
+            throw new Error(`Provider "${providerName}" is not currently supported for chat. AI actions, note context, and web search are only available for Gemini.`);
+        }
+        // Update the last (empty) message with the full response at once
+        setMessages(prev => {
+            const lastMsg = prev[prev.length - 1];
+            const updatedMsg = { ...lastMsg, text: response.text, citations: response.citations };
+            return [...prev.slice(0, -1), updatedMsg];
+        });
+      }
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
       setError(errorMessage);
-       setMessages(prev => [...prev, {role: 'model', text: `Sorry, something went wrong: ${errorMessage}`}]);
+      setMessages(prev => {
+        const lastMsg = prev[prev.length - 1];
+        const updatedMsg = { ...lastMsg, text: `Sorry, something went wrong: ${errorMessage}` };
+        return [...prev.slice(0, -1), updatedMsg];
+      });
     } finally {
       setIsLoading(false);
     }
@@ -134,12 +173,14 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
     if (input) {
         const timer = setTimeout(() => {
             if (messages.length === 0 || messages[messages.length - 1].role === 'model') {
-                handleSend(input);
+                if(input.trim()){ // Ensure we don't send empty prompts
+                    handleSend(input);
+                }
             }
         }, 100);
         return () => clearTimeout(timer);
     }
-  }, [input, handleSend]);
+  }, [input]);
 
   const handleSpeak = async (text: string, index: number) => {
     if (isSpeaking === index) { // If it's already playing, stop it
@@ -202,6 +243,7 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
                   style={{ whiteSpace: 'pre-wrap' }}
                 >
                   {msg.text}
+                  {msg.role === 'model' && !msg.text && isLoading && index === messages.length - 1 && <Spinner />}
                    {msg.role === 'model' && isGemini && (
                         <button 
                             onClick={() => handleSpeak(msg.text, index)}
@@ -234,13 +276,6 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
                 )}
               </div>
             ))}
-            {isLoading && (
-                 <div className="flex justify-start">
-                    <div className="max-w-prose p-3 rounded-lg bg-light-surface dark:bg-dark-surface flex items-center">
-                        <Spinner /> Thinking...
-                    </div>
-                </div>
-            )}
             <div ref={messagesEndRef} />
           </div>
         )}
