@@ -1,0 +1,8 @@
+{
+  "name": "Copy of Cogniflow",
+  "description": "An intelligent knowledge management system that uses AI to help you connect ideas, discover insights, and build a second brain. It automatically organizes your notes, generates summaries and tags, and visualizes the relationships between your thoughts.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
