@@ -44,9 +44,16 @@ const App: React.FC = () => {
     reorderFolders,
     handlePatchStatusChange,
     handleToggleFeatureFlag,
+    initialize,
+    isInitialized,
   } = useStore();
 
   useEffect(() => {
+    initialize();
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized) return;
     // Handle shared note URL on initial load
     const hash = window.location.hash;
     if (hash.startsWith('#/share/')) {
