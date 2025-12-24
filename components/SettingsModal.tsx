@@ -11,6 +11,7 @@ interface SettingsModalProps {
 
 const PROVIDERS: { id: AiProvider; name: string }[] = [
   { id: 'gemini', name: 'Google Gemini' },
+  { id: 'universal', name: 'Universal (OpenAI-Compatible)' },
   { id: 'huggingface', name: 'Hugging Face' },
   { id: 'openai', name: 'OpenAI' },
   { id: 'anthropic', name: 'Anthropic' },
@@ -55,6 +56,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
     setCurrentSettings(prev => ({
       ...prev,
       huggingface: { ...prev.huggingface, modelId },
+    }));
+  };
+
+  const handleUniversalChange = (field: 'baseUrl' | 'modelId', value: string) => {
+    setCurrentSettings(prev => ({
+      ...prev,
+      universal: { ...prev.universal, [field]: value },
     }));
   };
   
@@ -146,6 +154,36 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                                             onChange={(e) => handleModelIdChange(e.target.value)}
                                             className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
                                         />
+                                    </div>
+                                )}
+                                {selectedProvider === 'universal' && (
+                                     <div className="space-y-4">
+                                        <div>
+                                            <label htmlFor="universal-base-url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Base URL
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="universal-base-url"
+                                                placeholder="e.g., http://localhost:11434/v1"
+                                                value={currentSettings.universal.baseUrl}
+                                                onChange={(e) => handleUniversalChange('baseUrl', e.target.value)}
+                                                className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="universal-model-id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Model ID
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="universal-model-id"
+                                                placeholder="e.g., llama3"
+                                                value={currentSettings.universal.modelId}
+                                                onChange={(e) => handleUniversalChange('modelId', e.target.value)}
+                                                className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
+                                            />
+                                        </div>
                                     </div>
                                 )}
                             </div>

@@ -3,6 +3,7 @@ import { AiSettings, Note, Citation, AiAction, Folder } from '../types';
 import { processChatTurn } from '../services/geminiService';
 import { generateSpeech } from '../services/geminiService';
 import { processHuggingFaceChat } from '../services/huggingfaceService';
+import { processUniversalChat } from '../services/universalService';
 import { decode, decodeAudioData } from '../utils';
 import Spinner from './Spinner';
 import { BrainCircuitIcon, GlobeIcon, SendIcon, Volume2Icon, LoaderIcon } from './icons';
@@ -133,6 +134,36 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
             });
         }
 
+      } else if (provider === 'universal') {
+        const apiKey = settings.keys.universal;
+        const baseUrl = settings.universal.baseUrl;
+        const modelId = settings.universal.modelId;
+
+        const handleChunk = (textChunk: string) => {
+            if (textChunk) {
+                setMessages(prev => {
+                    const lastMsg = prev[prev.length - 1];
+                    const updatedMsg = { ...lastMsg, text: lastMsg.text + textChunk };
+                    return [...prev.slice(0, -1), updatedMsg];
+                });
+            }
+        };
+
+        const response = await processUniversalChat(
+            historyForApi,
+            textToSend,
+            apiKey,
+            baseUrl,
+            modelId,
+            handleChunk
+        );
+
+        setMessages(prev => {
+            const lastMsg = prev[prev.length - 1];
+            const updatedMsg = { ...lastMsg, text: response.text };
+            return [...prev.slice(0, -1), updatedMsg];
+        });
+
       } else {
         let response: { text: string; citations?: Citation[] };
         if (provider === 'huggingface') {
@@ -166,14 +197,13 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
 
   const handlePromptClick = (prompt: string) => {
       setInput(prompt);
-      // We don't call handleSend directly to avoid double state updates with setInput
   }
   
   useEffect(() => {
     if (input) {
         const timer = setTimeout(() => {
             if (messages.length === 0 || messages[messages.length - 1].role === 'model') {
-                if(input.trim()){ // Ensure we don't send empty prompts
+                if(input.trim()){
                     handleSend(input);
                 }
             }
@@ -183,7 +213,7 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
   }, [input]);
 
   const handleSpeak = async (text: string, index: number) => {
-    if (isSpeaking === index) { // If it's already playing, stop it
+    if (isSpeaking === index) {
         if (audioSourceRef.current) {
             audioSourceRef.current.stop();
         }
@@ -257,18 +287,18 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
                 </div>
                 {msg.citations && msg.citations.length > 0 && (
                   <div className="mt-2 max-w-prose">
-                    <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400">Sources:</h4>
-                    <div className="flex flex-wrap gap-2 mt-1">
+                    <p className="text-xs font-semibold mb-1 text-gray-500">Sources:</p>
+                    <div className="flex flex-wrap gap-2">
                       {msg.citations.map((citation, i) => (
                         <a 
                           key={i} 
                           href={citation.uri} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-xs bg-gray-200 dark:bg-dark-secondary px-2 py-1 rounded-md hover:underline"
+                          className="text-xs bg-light-primary dark:bg-dark-secondary px-2 py-1 rounded hover:underline truncate max-w-[200px]"
                           title={citation.title}
                         >
-                          {i+1}. {new URL(citation.uri).hostname}
+                          {citation.title}
                         </a>
                       ))}
                     </div>
@@ -281,58 +311,53 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
         )}
       </div>
 
-      <div className="mt-auto">
-        {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
-        <div className="flex items-center gap-2 p-2 bg-light-surface dark:bg-dark-surface border border-light-primary dark:border-dark-secondary rounded-xl">
-          <textarea
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3">
+        {isGemini && (
+            <div className="flex gap-4 px-1">
+                <label className="flex items-center gap-2 text-sm cursor-pointer group">
+                    <input 
+                        type="checkbox" 
+                        checked={useWebSearch} 
+                        onChange={(e) => setUseWebSearch(e.target.checked)}
+                        className="rounded border-gray-300 text-light-accent focus:ring-light-accent"
+                    />
+                    <span className="text-gray-600 dark:text-gray-400 group-hover:text-light-accent transition-colors">Web Search</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer group">
+                    <input 
+                        type="checkbox" 
+                        checked={useThinkingMode} 
+                        onChange={(e) => setUseThinkingMode(e.target.checked)}
+                        className="rounded border-gray-300 text-light-accent focus:ring-light-accent"
+                    />
+                    <span className="text-gray-600 dark:text-gray-400 group-hover:text-light-accent transition-colors">Thinking Mode (Pro)</span>
+                </label>
+            </div>
+        )}
+        
+        <div className="flex gap-2">
+          <input
+            type="text"
             value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder={ isGemini ? "e.g., 'Create a note about React hooks'" : "Ask a question..."}
-            className="w-full bg-transparent p-2 focus:outline-none resize-none"
-            rows={1}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            placeholder={`Ask ${providerName}...`}
+            className="flex-1 p-3 rounded-lg border border-light-primary dark:border-dark-secondary bg-light-surface dark:bg-dark-surface focus:outline-none focus:ring-2 focus:ring-light-accent"
             disabled={isLoading}
           />
-           <label className={`flex items-center gap-2 cursor-pointer transition-opacity p-2 rounded-md hover:bg-light-secondary dark:hover:bg-dark-primary ${!isGemini ? 'opacity-50 cursor-not-allowed' : ''}`} title="Enable Web Search">
-                <input 
-                    type="checkbox"
-                    checked={useWebSearch}
-                    onChange={() => setUseWebSearch(!useWebSearch)}
-                    disabled={!isGemini}
-                    className="h-4 w-4 rounded border-gray-300 text-light-accent focus:ring-light-accent"
-                />
-                <GlobeIcon className="w-5 h-5" />
-             </label>
-             <button
-                onClick={() => handleSend()}
-                disabled={isLoading || !input.trim()}
-                className="p-2 bg-light-accent text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <SendIcon className="w-5 h-5" />
-              </button>
-        </div>
-         <div className="flex items-center justify-between mt-2">
-            {!isGemini ? (
-                 <p className="text-xs text-gray-500 text-center flex-1">AI actions, web search, and thinking mode are only available when Google Gemini is the selected provider.</p>
-            ): (
-                <>
-                    <p className="text-xs text-gray-500"></p>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-500 dark:text-gray-400">
-                        <input 
-                            type="checkbox"
-                            checked={useThinkingMode}
-                            onChange={() => setUseThinkingMode(!useThinkingMode)}
-                            className="h-4 w-4 rounded border-gray-300 text-light-accent focus:ring-light-accent"
-                        />
-                        <span>Thinking Mode (gemini-2.5-pro)</span>
-                    </label>
-                </>
-            )}
+          <button
+            onClick={() => handleSend()}
+            disabled={isLoading || !input.trim()}
+            className="p-3 bg-light-accent text-white rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+          >
+            <SendIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>

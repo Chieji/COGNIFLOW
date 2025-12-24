@@ -44,7 +44,7 @@ export enum View {
 
 export type Theme = 'light' | 'dark';
 
-export type AiProvider = 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'groq' | 'huggingface';
+export type AiProvider = 'gemini' | 'openai' | 'anthropic' | 'openrouter' | 'groq' | 'huggingface' | 'universal';
 
 export interface AiSettings {
   tasks: {
@@ -59,8 +59,13 @@ export interface AiSettings {
     openrouter: string;
     groq: string;
     huggingface: string;
+    universal: string;
   };
   huggingface: {
+    modelId: string;
+  };
+  universal: {
+    baseUrl: string;
     modelId: string;
   };
 }
