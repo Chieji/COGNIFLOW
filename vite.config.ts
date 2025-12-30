@@ -10,7 +10,23 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
       },
       plugins: [react()],
-
+      build: {
+        lib: {
+          entry: path.resolve(__dirname, 'index.tsx'),
+          name: 'Cogniflow',
+          formats: ['es', 'umd'],
+          fileName: (format) => `cogniflow.${format === 'umd' ? 'umd' : 'es'}.js`
+        },
+        rollupOptions: {
+          external: ['react', 'react-dom'],
+          output: {
+            globals: {
+              react: 'React',
+              'react-dom': 'ReactDOM'
+            }
+          }
+        }
+      },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
