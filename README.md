@@ -6,6 +6,8 @@
 
 **COGNIFLOW** is a cutting-edge application designed to help developers and researchers organize their thoughts, code snippets, and research findings into an interconnected, AI-enhanced knowledge graph. It combines a powerful note-taking interface with a dedicated development studio and utilizes large language models (LLMs) for intelligent analysis, connection discovery, and code assistance.
 
+Now available as an **NPM package**: [`@chieji/cogniflow`](https://www.npmjs.com/package/@chieji/cogniflow)
+
 ## Key Features
 
 | Feature | Description | AI Integration |
@@ -26,17 +28,20 @@
 | **AI Services** | Google GenAI SDK (`@google/genai`) | Integration with Gemini models for core AI features. |
 | **Styling** | (Assumed) Tailwind CSS or similar | Utility-first CSS framework for rapid styling. |
 
-## Getting Started
+## Installation
 
-This guide contains everything you need to run your COGNIFLOW application locally.
+### As an NPM Package
+```bash
+npm install @chieji/cogniflow
+```
 
-### Prerequisites
+### For Development
 
-You will need the following installed on your system:
-*   **Node.js** (LTS version recommended)
-*   **npm** (Node Package Manager)
+#### Prerequisites
+- **Node.js** (LTS version recommended)
+- **npm** (Node Package Manager)
 
-### Installation and Setup
+#### Setup
 
 1.  **Clone the repository:**
     ```bash
@@ -52,16 +57,20 @@ You will need the following installed on your system:
 3.  **Configure API Key:**
     The application requires a **Gemini API Key** for its core AI functionalities. Create a file named `.env.local` in the root of the project and add your key:
     ```
-    # .env.local
     VITE_GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
     ```
-    *Note: The application is configured to securely load this key only during the development process and should be managed securely in a production environment.*
 
-4.  **Run the application:**
+4.  **Run the development server:**
     ```bash
     npm run dev
     ```
-    The application will typically be available at `http://localhost:3000`.
+    The application will be available at `http://localhost:3000`.
+
+5.  **Build the library:**
+    ```bash
+    npm run build
+    ```
+    Outputs optimized ES and UMD bundles to the `dist/` directory.
 
 ## Contributing
 
