@@ -1,0 +1,42 @@
+name: CI - Build, Test & Validate
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npx tsc --noEmit
+  
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - name: Verify no API keys in build
+        run: |
+          if grep -r "GEMINI_API_KEY\|sk-\|AIza" dist/ 2>/dev/null; then
+            echo "❌ SECURITY ALERT: Potential API keys found!"
+            exit 1
+          fi
