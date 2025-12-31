@@ -1,0 +1,273 @@
+/* COGNIFLOW Global Styles - Premium UI Polish */
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* ===== CSS Variables for Premium Theme ===== */
+:root {
+  /* Dark Mode - Premium Palette */
+  --color-dark-bg: #0a0e27;
+  --color-dark-surface: #141829;
+  --color-dark-primary: #1a1f3a;
+  --color-dark-secondary: #2d3748;
+  --color-dark-accent: #00d9ff;
+  --color-dark-accent-hover: #00f5ff;
+  --color-dark-text: #e2e8f0;
+  --color-dark-text-secondary: #a0aec0;
+
+  /* Light Mode - Premium Palette */
+  --color-light-bg: #f8fafc;
+  --color-light-surface: #ffffff;
+  --color-light-primary: #e2e8f0;
+  --color-light-secondary: #cbd5e1;
+  --color-light-accent: #0066ff;
+  --color-light-accent-hover: #0052cc;
+  --color-light-text: #1a202c;
+  --color-light-text-secondary: #64748b;
+
+  /* Glassmorphism */
+  --glass-blur: blur(10px);
+  --glass-opacity: 0.8;
+
+  /* Shadows - Premium */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(0, 217, 255, 0.3);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Base Styles ===== */
+* {
+  @apply transition-colors duration-200;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-dark-bg text-dark-text antialiased;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Glassmorphism Component ===== */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(10, 14, 39, 0.4);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(0, 217, 255, 0.1);
+}
+
+/* ===== Glow Effects ===== */
+.glow-accent {
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.3), 0 0 40px rgba(0, 217, 255, 0.1);
+}
+
+.glow-accent-hover:hover {
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.5), 0 0 60px rgba(0, 217, 255, 0.2);
+}
+
+.glow-text {
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+}
+
+/* ===== Smooth Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 217, 255, 0.3);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 217, 255, 0.6);
+}
+
+/* ===== Custom Button Styles ===== */
+.btn-primary {
+  @apply px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium;
+  @apply hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-200;
+  @apply active:scale-95;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 rounded-lg bg-dark-primary border border-dark-secondary text-dark-text;
+  @apply hover:border-dark-accent hover:text-dark-accent transition-all duration-200;
+}
+
+.btn-ghost {
+  @apply px-4 py-2 rounded-lg text-dark-text-secondary hover:text-dark-accent;
+  @apply hover:bg-dark-primary/50 transition-all duration-200;
+}
+
+/* ===== Card Styles ===== */
+.card {
+  @apply bg-dark-primary border border-dark-secondary rounded-xl p-4;
+  @apply hover:border-dark-accent/50 transition-all duration-300;
+}
+
+.card-hover {
+  @apply card hover:shadow-lg hover:shadow-cyan-500/10;
+}
+
+/* ===== Input Styles ===== */
+input,
+textarea,
+select {
+  @apply bg-dark-surface border border-dark-secondary rounded-lg px-3 py-2;
+  @apply text-dark-text placeholder-dark-text-secondary;
+  @apply focus:outline-none focus:border-dark-accent focus:ring-2 focus:ring-dark-accent/20;
+  @apply transition-all duration-200;
+}
+
+/* ===== Badge Styles ===== */
+.badge {
+  @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium;
+  @apply bg-dark-secondary/50 text-dark-text-secondary;
+}
+
+.badge-accent {
+  @apply bg-cyan-500/20 text-cyan-300;
+}
+
+.badge-success {
+  @apply bg-green-500/20 text-green-300;
+}
+
+.badge-warning {
+  @apply bg-yellow-500/20 text-yellow-300;
+}
+
+.badge-error {
+  @apply bg-red-500/20 text-red-300;
+}
+
+/* ===== Animation Keyframes ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 217, 255, 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* ===== Animation Classes ===== */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideInDown 0.4s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ===== Utility Classes ===== */
+.text-gradient {
+  background: linear-gradient(135deg, #00d9ff 0%, #0066ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-accent {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 102, 255, 0.1) 100%);
+}
+
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 768px) {
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    @apply text-sm;
+  }
+}
