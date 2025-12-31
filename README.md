@@ -54,7 +54,7 @@ npm install @chieji/cogniflow
     ```bash
     npm run dev
     ```
-    The application will be available at `http://localhost:3000`.
+    The application will be available at `http://localhost:1477`.
 5.  **Build the library:**
     ```bash
     npm run build
@@ -83,7 +83,7 @@ If you are running COGNIFLOW in a Linux environment (like a cloud VM or UserLAnd
     const app = express();
     app.use(express.json());
     app.use(cors({
-      origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+      origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:1477'],
     }));
 
     app.post('/api/proxy', (req, res) => {
@@ -103,7 +103,7 @@ If you are running COGNIFLOW in a Linux environment (like a cloud VM or UserLAnd
     # Server-side keys for the proxy
     GEMINI_API_KEY="YOUR_ACTUAL_GEMINI_KEY"
     OPENAI_API_KEY="YOUR_ACTUAL_OPENAI_KEY"
-    ALLOWED_ORIGINS="http://localhost:3000"
+    ALLOWED_ORIGINS="http://localhost:1477"
     ```
 4.  **Run the Proxy and Frontend:**
     ```bash

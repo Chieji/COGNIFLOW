@@ -273,7 +273,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:1477'],
 }));
 
 // Import the proxy handler
@@ -304,7 +304,7 @@ Create `.env`:
 GEMINI_API_KEY=your_key
 OPENAI_API_KEY=your_key
 # ... other keys
-ALLOWED_ORIGINS=http://localhost:3000,https://your-domain.com
+ALLOWED_ORIGINS=http://localhost:1477,https://your-domain.com
 ```
 
 ### Step 4: Run the Server
