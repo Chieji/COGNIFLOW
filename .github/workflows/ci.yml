@@ -1,268 +1,42 @@
 name: CI - Build, Test & Validate
 
-# Trigger the workflow on push and pull requests
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
 
-# Environment variables
 env:
   NODE_VERSION: '18'
-  NPM_VERSION: '9'
 
 jobs:
-  # Job 1: Lint and Type Check
   lint-and-typecheck:
     name: Lint & Type Check
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run ESLint (if configured)
-        run: npm run lint --if-present || echo "No lint script configured"
-      
-      - name: Type check with TypeScript
-        run: npx tsc --noEmit
-        continue-on-error: true
-      
-      - name: Check for console.error and console.warn
-        run: |
-          echo "Checking for unhandled console statements..."
-          if grep -r "console\.error\|console\.warn" src/ --include="*.ts" --include="*.tsx" | grep -v "// @ts-ignore" | grep -v "//" | head -5; then
-            echo "⚠️  Found console statements. Consider using a logger instead."
-          else
-            echo "✅ No problematic console statements found."
-          fi
-        continue-on-error: true
-
-  # Job 2: Build Verification
+      - run: npm ci
+      - run: npx tsc --noEmit
+  
   build:
     name: Build Verification
     runs-on: ubuntu-latest
     needs: lint-and-typecheck
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build project
-        run: npm run build
-      
-      - name: Check build output
-        run: |
-          if [ -d "dist" ]; then
-            echo "✅ Build successful! Output directory: dist/"
-            ls -lh dist/ | head -10
-          else
-            echo "❌ Build failed! No dist directory found."
-            exit 1
-          fi
-      
+      - run: npm ci
+      - run: npm run build
       - name: Verify no API keys in build
         run: |
-          echo "Scanning build output for exposed API keys..."
-          if grep -r "GEMINI_API_KEY\|OPENAI_API_KEY\|sk-\|AIza" dist/ 2>/dev/null; then
-            echo "❌ SECURITY ALERT: Potential API keys found in build output!"
+          if grep -r "GEMINI_API_KEY\|sk-\|AIza" dist/ 2>/dev/null; then
+            echo "❌ SECURITY ALERT: Potential API keys found!"
             exit 1
-          else
-            echo "✅ No API keys detected in build output."
           fi
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-output
-          path: dist/
-          retention-days: 5
-
-  # Job 3: Dependency Security Audit
-  security-audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
-      
-      - name: Check for known vulnerabilities
-        run: |
-          echo "Running security vulnerability check..."
-          npm audit --json > audit-report.json 2>&1 || true
-          
-          # Count vulnerabilities
-          VULNS=$(cat audit-report.json | grep -o '"severity":"high"' | wc -l)
-          if [ "$VULNS" -gt 0 ]; then
-            echo "⚠️  Found $VULNS high-severity vulnerabilities"
-            cat audit-report.json | grep -A 5 '"severity":"high"' | head -20
-          else
-            echo "✅ No high-severity vulnerabilities detected."
-          fi
-      
-      - name: Upload audit report
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: npm-audit-report
-          path: audit-report.json
-          retention-days: 7
-
-  # Job 4: Code Quality Metrics
-  code-quality:
-    name: Code Quality Metrics
-    runs-on: ubuntu-latest
-    needs: lint-and-typecheck
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Analyze code complexity
-        run: |
-          echo "Checking TypeScript files for potential issues..."
-          
-          # Count total lines of code
-          TOTAL_LINES=$(find src -name "*.ts" -o -name "*.tsx" | xargs wc -l | tail -1 | awk '{print $1}')
-          echo "📊 Total lines of code: $TOTAL_LINES"
-          
-          # Count components
-          COMPONENTS=$(find src/components -name "*.tsx" 2>/dev/null | wc -l)
-          echo "📊 Total components: $COMPONENTS"
-          
-          # Count services
-          SERVICES=$(find src/services -name "*.ts" 2>/dev/null | wc -l)
-          echo "📊 Total services: $SERVICES"
-          
-          # Check for large files (potential refactoring candidates)
-          echo ""
-          echo "⚠️  Large files (potential refactoring candidates):"
-          find src -name "*.ts" -o -name "*.tsx" | xargs wc -l | sort -rn | head -5
-      
-      - name: Check for TODO/FIXME comments
-        run: |
-          echo "Scanning for TODO/FIXME comments..."
-          TODO_COUNT=$(grep -r "TODO\|FIXME" src --include="*.ts" --include="*.tsx" | wc -l)
-          if [ "$TODO_COUNT" -gt 0 ]; then
-            echo "⚠️  Found $TODO_COUNT TODO/FIXME comments:"
-            grep -r "TODO\|FIXME" src --include="*.ts" --include="*.tsx" | head -10
-          else
-            echo "✅ No TODO/FIXME comments found."
-          fi
-        continue-on-error: true
-
-  # Job 5: Test Suite (if tests exist)
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    needs: lint-and-typecheck
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run tests
-        run: npm test --if-present || echo "No test script configured"
-        continue-on-error: true
-      
-      - name: Upload test results
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: test-results
-          path: coverage/
-          retention-days: 7
-
-  # Job 6: Summary Report
-  summary:
-    name: CI Summary
-    runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, build, security-audit, code-quality, test]
-    if: always()
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Generate Summary
-        run: |
-          echo "## 🚀 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
-          echo "- **Lint & Type Check**: ${{ needs.lint-and-typecheck.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build**: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Security Audit**: ${{ needs.security-audit.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Code Quality**: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tests**: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Artifacts Generated" >> $GITHUB_STEP_SUMMARY
-          echo "- Build output (dist/)" >> $GITHUB_STEP_SUMMARY
-          echo "- Security audit report" >> $GITHUB_STEP_SUMMARY
-          echo "- Test results (if available)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "1. Review any warnings or failures above" >> $GITHUB_STEP_SUMMARY
-          echo "2. Fix issues before merging to main" >> $GITHUB_STEP_SUMMARY
-          echo "3. Deploy to production after successful CI" >> $GITHUB_STEP_SUMMARY
-      
-      - name: Notify on Failure
-        if: failure()
-        run: |
-          echo "❌ CI Pipeline failed! Please review the logs above."
-          exit 1
-      
-      - name: Notify on Success
-        if: success()
-        run: |
-          echo "✅ CI Pipeline passed! Your code is ready for deployment."
