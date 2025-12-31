@@ -11,6 +11,12 @@
  */
 
 import type { Note } from '../types';
+import {
+  validateChatMessage,
+  validateNoteContent,
+  validateApiPayload,
+  logValidationViolation,
+} from '../utils/validation';
 
 export interface GenerateContentResponse {
   candidates?: Array<{
@@ -39,12 +45,24 @@ function getProxyUrl(): string {
 
 /**
  * Make a request through the secure proxy
+ * This includes validation as the final checkpoint before data leaves the client
  */
 async function proxyRequest(
   payload: any,
   endpoint?: string
 ): Promise<GenerateContentResponse> {
   const proxyUrl = getProxyUrl();
+
+  // Validate the payload before sending to the proxy
+  const validation = validateApiPayload(payload);
+  if (!validation.valid) {
+    logValidationViolation(
+      JSON.stringify(payload).substring(0, 100),
+      validation.error || 'Unknown validation error',
+      { endpoint }
+    );
+    throw new Error(`Validation failed: ${validation.error}`);
+  }
 
   try {
     const response = await fetch(proxyUrl, {
@@ -121,6 +139,13 @@ export const generateInsights = async (
   content: string,
   _apiKey: string // Kept for backwards compatibility but not used
 ): Promise<{ summary: string; tags: string[] }> => {
+  // Validate the content before processing
+  const contentValidation = validateNoteContent(content);
+  if (!contentValidation.valid) {
+    logValidationViolation(content, contentValidation.error || 'Invalid content');
+    throw new Error(`Content validation failed: ${contentValidation.error}`);
+  }
+
   const prompt = `Analyze the following note content and provide:
 1. A concise summary (1-2 sentences)
 2. 3-5 relevant tags
@@ -172,6 +197,13 @@ export const processGeminiChat = async (
   onChunk?: (chunk: string) => void,
   onExecuteAction?: (action: any) => any
 ): Promise<{ citations: Citation[] }> => {
+  // Validate the new message before processing
+  const messageValidation = validateChatMessage(newMessage);
+  if (!messageValidation.valid) {
+    logValidationViolation(newMessage, messageValidation.error || 'Invalid message');
+    throw new Error(`Message validation failed: ${messageValidation.error}`);
+  }
+
   const fullHistory = [
     ...history,
     { role: 'user' as const, parts: [{ text: newMessage }] },

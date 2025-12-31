@@ -5,12 +5,9 @@ import { generateSpeech } from '../services/geminiService';
 import { processHuggingFaceChat } from '../services/huggingfaceService';
 import { processUniversalChat } from '../services/universalService';
 import { decode, decodeAudioData } from '../utils';
+import { validateChatMessage } from '../utils/validation';
 import Spinner from './Spinner';
-import { BrainCircuitIcon, GlobeIcon, SendIcon, Volume2Icon, LoaderIcon } from './icons';
-
-interface ChatViewProps {
-  settings: AiSettings;
-  notes: Note[];
+import { BrainCircuitIcon, GlobeIcon, SendIcon, Volume2Icon, LoaderIcon } from './icons';s: Note[];
   folders: Folder[];
   onAiAction: (action: AiAction) => string;
 }
@@ -84,7 +81,14 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
     const textToSend = messageText || input;
     if (!textToSend.trim() || isLoading) return;
 
-    const userMessage: Message = { role: 'user', text: textToSend };
+    // Validate the message before processing (Security Guard)
+    const validation = validateChatMessage(textToSend);
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid message');
+      return;
+    }
+
+    const userMessage: Message = { role: 'user', text: validation.sanitized || textToSend };
     setMessages(prev => [...prev, userMessage, { role: 'model', text: '' }]);
     setInput('');
     setIsLoading(true);
@@ -184,10 +188,14 @@ const ChatView: React.FC<ChatViewProps> = ({ settings, notes, folders, onAiActio
       }
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError(errorMessage);
+      // Check if this is a validation error and provide better messaging
+      const displayMessage = errorMessage.includes('Validation failed') || errorMessage.includes('validation')
+        ? `Message validation error: ${errorMessage}`
+        : errorMessage;
+      setError(displayMessage);
       setMessages(prev => {
         const lastMsg = prev[prev.length - 1];
-        const updatedMsg = { ...lastMsg, text: `Sorry, something went wrong: ${errorMessage}` };
+        const updatedMsg = { ...lastMsg, text: `Sorry, something went wrong: ${displayMessage}` };
         return [...prev.slice(0, -1), updatedMsg];
       });
     } finally {
