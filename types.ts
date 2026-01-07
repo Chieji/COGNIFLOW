@@ -64,10 +64,12 @@ export interface AiSettings {
   huggingface: {
     modelId: string;
   };
+  accentColor?: string;
   universal: {
     baseUrl: string;
     modelId: string;
   };
+  accentColor?: string;
 }
 
 export interface Citation {

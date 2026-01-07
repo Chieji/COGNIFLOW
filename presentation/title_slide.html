@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        html, body { margin: 0; padding: 0; }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background-color: #0F1115;
+            color: #FFFFFF;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .left-panel {
+            width: 50%;
+            padding-top: 100px; /* keep title top padding */
+            padding-left: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            border-right: 1px solid #3B82F6;
+        }
+        .right-panel {
+            width: 50%;
+            position: relative;
+        }
+        .right-panel img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .title {
+            font-size: 64px;
+            font-weight: 900;
+            line-height: 1.1;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            color: #FFFFFF;
+        }
+        .subtitle {
+            font-size: 32px;
+            font-weight: 400;
+            color: #B0B3B8;
+            margin-bottom: 60px;
+        }
+        .presenter {
+            font-size: 20px;
+            font-weight: 700;
+            color: #3B82F6;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .accent-bar {
+            width: 100px;
+            height: 8px;
+            background-color: #F59E0B;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="left-panel">
+            <div class="title">COGNIFLOW<br>Repository<br>Update</div>
+            <div class="subtitle">Enhancing Identity and Intelligence</div>
+            <div class="presenter">Nexus v.3</div>
+            <div class="accent-bar"></div>
+        </div>
+        <div class="right-panel">
+            <img src="/home/ubuntu/COGNIFLOW/slide6_roadmap.png" alt="Roadmap">
+        </div>
+    </div>
+</body>
+</html>

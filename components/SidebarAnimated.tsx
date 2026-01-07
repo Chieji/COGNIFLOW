@@ -26,7 +26,7 @@ interface SidebarAnimatedProps {
 
 const Logo = () => (
   <motion.svg 
-    className="w-8 h-8 text-light-accent dark:text-dark-accent" 
+    className="w-8 h-8 text-light-accent dark:" 
     viewBox="0 0 1536.000000 1024.000000" 
     fill="none" 
     animate={{ rotate: 360 }}
@@ -183,7 +183,7 @@ const SidebarAnimated: React.FC<SidebarAnimatedProps> = ({
           onClick={createNewNote}
           variants={itemVariants}
           whileHover="hover"
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gradient-accent hover:bg-cyan-500/20 text-dark-accent transition-all"
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-dark-secondary hover:opacity-80  transition-all"
         >
           <PlusIcon className="w-4 h-4" />
           <span className="text-sm">New</span>
@@ -229,8 +229,8 @@ const SidebarAnimated: React.FC<SidebarAnimatedProps> = ({
             whileHover="hover"
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
               view === item.view
-                ? 'bg-gradient-accent text-dark-bg font-semibold'
-                : 'text-dark-text-secondary hover:text-dark-accent'
+                ? 'bg-dark-secondary text-dark-bg font-semibold'
+                : 'text-dark-text-secondary hover:'
             }`}
           >
             <item.icon className="w-5 h-5" />
@@ -248,7 +248,7 @@ const SidebarAnimated: React.FC<SidebarAnimatedProps> = ({
       >
         <motion.button
           onClick={() => setIsFoldersExpanded(!isFoldersExpanded)}
-          className="w-full flex items-center justify-between px-2 py-2 text-sm font-semibold text-dark-text-secondary hover:text-dark-accent transition-colors"
+          className="w-full flex items-center justify-between px-2 py-2 text-sm font-semibold text-dark-text-secondary hover: transition-colors"
           variants={itemVariants}
         >
           <span className="flex items-center gap-2">
@@ -284,8 +284,8 @@ const SidebarAnimated: React.FC<SidebarAnimatedProps> = ({
                   whileHover="hover"
                   className={`list-none px-3 py-2 rounded-lg cursor-pointer transition-all ${
                     activeFolderId === folder.id
-                      ? 'bg-dark-accent/20 text-dark-accent font-semibold'
-                      : 'text-dark-text-secondary hover:text-dark-accent'
+                      ? 'bg-dark-accent/20  font-semibold'
+                      : 'text-dark-text-secondary hover:'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -306,7 +306,7 @@ const SidebarAnimated: React.FC<SidebarAnimatedProps> = ({
                 onClick={handleNewFolder}
                 variants={itemVariants}
                 whileHover={{ x: 4 }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-dark-accent hover:bg-dark-primary/50 rounded-lg transition-all"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm  hover:bg-dark-primary/50 rounded-lg transition-all"
               >
                 <PlusIcon className="w-4 h-4" />
                 New Folder

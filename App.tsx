@@ -48,6 +48,13 @@ const App: React.FC = () => {
     isInitialized,
   } = useStore();
 
+
+  useEffect(() => {
+    if (settings.accentColor) {
+      document.documentElement.style.setProperty('--user-accent-color', settings.accentColor);
+    }
+  }, [settings.accentColor]);
+
   useEffect(() => {
     initialize();
   }, []);

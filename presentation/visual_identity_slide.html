@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background-color: #0F1115;
+            color: #FFFFFF;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            overflow: hidden;
+        }
+        .left-panel {
+            width: 50%;
+            padding-top: 60px; /* keep upper padding for title */
+            padding-left: 48px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #3B82F6;
+        }
+        .right-panel {
+            width: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #141829;
+        }
+        .right-panel img {
+            width: 460px;
+            height: 460px;
+            object-fit: contain;
+        }
+        .page-title {
+            font-size: 32px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #3B82F6;
+            margin-bottom: 28px;
+        }
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #F59E0B;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .body-text {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #B0B3B8;
+            padding-right: 20px;
+        }
+        .highlight {
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+        .list-item {
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="left-panel">
+            <div class="page-title">New Visual Identity</div>
+            <div class="section-title">High-Fidelity Aesthetics</div>
+            <div class="body-text">
+                <div class="list-item">
+                    <span class="highlight">Simplified Logo:</span> Replaced legacy SVG with a modern, clean design for better scalability and clarity.
+                </div>
+                <div class="list-item">
+                    <span class="highlight">Sidebar Integration:</span> Updated both standard and animated sidebars with the new vector paths.
+                </div>
+                <div class="list-item">
+                    <span class="highlight">Favicon Sync:</span> Synchronized the browser favicon to ensure a consistent brand experience across all touchpoints.
+                </div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <img src="/home/ubuntu/COGNIFLOW/slide3_visual_identity.png" alt="Visual Identity">
+        </div>
+    </div>
+</body>
+</html>

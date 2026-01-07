@@ -60,7 +60,7 @@ export const useStore = create<AppState>()(
         tasks: { chat: { provider: 'gemini' }, summary: { provider: 'gemini' }, translation: { provider: 'gemini' } },
         keys: { gemini: '', openai: '', anthropic: '', openrouter: '', groq: '', huggingface: '', universal: '' },
         huggingface: { modelId: 'mistralai/Mistral-7B-Instruct-v0.2' },
-        universal: { baseUrl: 'http://localhost:11434/v1', modelId: 'llama3' },
+        universal: { baseUrl: 'http://localhost:11434/v1', modelId: 'llama3', accentColor: '#FF0000' },
       },
       patches: [],
       featureFlags: [],

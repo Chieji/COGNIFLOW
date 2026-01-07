@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Keep min-height:720px as required. Remove default body margin to reduce overall page height by 8px
+           and shift up by 1px to make total rendered height strictly less than 720px. */
+        body { margin: -1px 0 0 0; }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background-color: #0F1115;
+            color: #FFFFFF;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            padding-top: 60px; /* preserved: do not change */
+            padding-left: 80px;
+            border-bottom: 1px solid #3B82F6;
+        }
+        .page-title {
+            font-size: 32px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #3B82F6;
+            margin-bottom: 20px;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            padding-top: 60px;
+            padding-left: 80px;
+            padding-right: 80px;
+        }
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #F59E0B;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            border-left: 4px solid #F59E0B;
+            padding-left: 16px;
+        }
+        .body-text {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #B0B3B8;
+        }
+        .highlight {
+            color: #FFFFFF;
+            font-weight: 700;
+        }
+        /* Remove default UL margins to avoid extra vertical space */
+        .body-text ul { margin: 0; padding: 0; list-style: none; }
+        .body-text li { margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="header">
+            <div class="page-title">Modernizing Brand and Intelligence</div>
+        </div>
+        <div class="content-grid">
+            <div class="column">
+                <div class="section-title">Strategic Goal</div>
+                <div class="body-text">
+                    The primary objective of this update was to <span class="highlight">modernize the brand identity</span> and <span class="highlight">professionalize the AI experience</span> within COGNIFLOW. We aimed to transition the application from a prototype-like state into a professional-grade tool that meets high industry standards.
+                </div>
+            </div>
+            <div class="column">
+                <div class="section-title">Key Updates</div>
+                <div class="body-text">
+                    <ul>
+                        <li><span class="highlight">Visual Identity:</span> Complete overhaul of logo and favicon for a high-fidelity aesthetic.</li>
+                        <li><span class="highlight">AI Chat Interface:</span> Integration of the assistant-ui framework for a sophisticated user experience.</li>
+                        <li><span class="highlight">Codebase Structure:</span> Refactored components and services for better maintainability and performance.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

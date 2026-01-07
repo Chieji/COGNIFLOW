@@ -59,6 +59,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
     }));
   };
 
+  const handleAccentColorChange = (color: string) => {
+    setCurrentSettings(prev => ({
+      ...prev,
+      accentColor: color,
+    }));
+  };
+
   const handleUniversalChange = (field: 'baseUrl' | 'modelId', value: string) => {
     setCurrentSettings(prev => ({
       ...prev,
@@ -191,7 +198,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                     </div>
                 );
             })}
+        
+        <div className="mt-4 p-4 border border-light-primary dark:border-dark-primary rounded-lg">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Accent Color
+            </label>
+            <div className="flex items-center space-x-4">
+                <input
+                    type="color"
+                    value={currentSettings.accentColor || '#FF0000'}
+                    onChange={(e) => handleAccentColorChange(e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer bg-transparent"
+                />
+                <span className="text-sm font-mono">{currentSettings.accentColor || '#FF0000'}</span>
+            </div>
         </div>
+</div>
 
         <div className="mt-6 pt-4 border-t border-light-primary dark:border-dark-primary flex justify-end space-x-3">
           <button 

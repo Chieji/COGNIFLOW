@@ -93,10 +93,16 @@ export const AssistantChat: React.FC<AssistantChatProps> = ({
 
   const runtime = useLocalRuntime(adapter);
 
+
+  const chatStyle = useMemo(() => ({
+    '--aui-primary': settings.accentColor || '#FF0000',
+  } as React.CSSProperties), [settings.accentColor]);
+
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <div className="flex-1 h-full bg-light-bg dark:bg-dark-bg overflow-hidden">
-        <Thread 
+      <div className="flex-1 h-full bg-light-bg dark:bg-dark-bg overflow-hidden" style={chatStyle}>
+
+        <Thread style={chatStyle} 
           welcome={{
             message: "Welcome to Cogniflow! How can I help you today?",
             suggestions: [

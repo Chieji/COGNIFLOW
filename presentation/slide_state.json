@@ -1,0 +1,60 @@
+{
+  "project_info": {
+    "title": "COGNIFLOW Repository Update Summary",
+    "created": 1767814894.0002334,
+    "last_updated": 1767815001.5979552,
+    "total_slides": 6
+  },
+  "slides": {
+    "title_slide": "edited",
+    "overview_slide": "edited",
+    "visual_identity_slide": "edited",
+    "ai_chat_slide": "edit_pending",
+    "technical_details_slide": "edit_pending",
+    "conclusion_slide": "edit_pending"
+  },
+  "outline": [
+    {
+      "id": "title_slide",
+      "title": "COGNIFLOW Repository Update Summary",
+      "summary": "Title slide introducing the repository updates.",
+      "image_plan": "/home/ubuntu/COGNIFLOW/slide6_roadmap.png - This image visually represents the concept of enhancing intelligence and a journey of development, aligning with the slide's title and content about Nexus v.3.",
+      "slide_template_key": ""
+    },
+    {
+      "id": "overview_slide",
+      "title": "Modernizing Brand and Intelligence",
+      "summary": "Overview of the key changes made to the repository.",
+      "image_plan": "",
+      "slide_template_key": ""
+    },
+    {
+      "id": "visual_identity_slide",
+      "title": "New Visual Identity Implementation",
+      "summary": "Details on the logo and favicon updates.",
+      "image_plan": "/home/ubuntu/COGNIFLOW/slide3_visual_identity.png - This image clearly shows a brand identity with a logo, directly relating to the 'New Visual Identity Implementation' and 'Aligning with High-Fidelity Aesthetics' discussed in the slide.",
+      "slide_template_key": ""
+    },
+    {
+      "id": "ai_chat_slide",
+      "title": "AI Chat Interface Upgrade",
+      "summary": "Information on the integration of assistant-ui.",
+      "image_plan": "/home/ubuntu/COGNIFLOW/slide4_ai_chat.png - This image displays an AI chat interface, which is the core topic of this slide, specifically mentioning the 'AI Chat Interface Upgrade' and 'Transitioning to Professional Frameworks'.",
+      "slide_template_key": ""
+    },
+    {
+      "id": "technical_details_slide",
+      "title": "Technical Implementation Details",
+      "summary": "Technical breakdown of the components and services updated.",
+      "image_plan": "/home/ubuntu/COGNIFLOW/slide5_technical_stack.png - This image illustrates a technical architecture with frontend, backend, AI models, and database, which aligns with the 'Technical Implementation Details' and 'Leveraging Modern React Ecosystem' discussed in the slide.",
+      "slide_template_key": ""
+    },
+    {
+      "id": "conclusion_slide",
+      "title": "Conclusion and Future Roadmap",
+      "summary": "Summary of results and future plans for the project.",
+      "image_plan": "/home/ubuntu/upload/pasted_file_LMNgdz_image.png - This image shows the Cogniflow application interface, representing the 'Cohesive and Powerful Experience' and the overall update summary, making it suitable for the conclusion.",
+      "slide_template_key": ""
+    }
+  ]
+}
