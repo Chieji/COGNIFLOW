@@ -5,7 +5,7 @@ import NoteList from './components/NoteList';
 import NoteEditor from './components/NoteEditor';
 import KnowledgeGraph from './components/KnowledgeGraph';
 import SettingsModal from './components/SettingsModal';
-import ChatView from './components/ChatView';
+import { AssistantChat } from './components/AssistantChat';
 import DevStudioView from './components/DevStudioView';
 import { BrainCircuitIcon } from './components/icons';
 import { useStore } from './store';
@@ -310,7 +310,7 @@ const App: React.FC = () => {
             setView={setView}
           />
         )}
-        {view === View.Chat && <ChatView settings={settings} notes={notes} folders={folders} onAiAction={handleAiAction} />}
+        {view === View.Chat && <AssistantChat settings={settings} notes={notes} folders={folders} onAiAction={handleAiAction} />}
         {view === View.DevStudio && (
           <DevStudioView
             patches={patches}
