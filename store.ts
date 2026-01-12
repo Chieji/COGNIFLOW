@@ -3,13 +3,15 @@ import { persist } from 'zustand/middleware';
 import { Note, Folder, Connection, AiSettings, PatchProposal, FeatureFlag, AuditLogEntry, View, Theme } from './types';
 import { initialNotes, initialFolders, initialPatches, initialFeatureFlags, initialAuditLog } from './constants';
 import { db } from './db';
+import { ensureInitialized } from './utils/dbUtils';
+import { optimisticUpdate } from './utils/dbUtils';
 
 interface AppState {
   notes: Note[];
   folders: Folder[];
   connections: Connection[];
   activeNoteId: string | null;
-  activeFolderId: string | null;
+  activeFolderI d: string | null;
   view: View;
   theme: Theme;
   isSettingsOpen: boolean;
@@ -34,7 +36,7 @@ interface AppState {
   setFeatureFlags: (flags: FeatureFlag[]) => void;
   setAuditLog: (log: AuditLogEntry[]) => void;
 
-  // Derived Actions
+  // Derived Actions with optimistic updates
   createNewNote: () => Promise<void>;
   updateNote: (updatedNote: Note) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
@@ -67,43 +69,49 @@ export const useStore = create<AppState>()(
       auditLog: [],
       isInitialized: false,
 
+      // FIXED: Use initialization lock to prevent race conditions
       initialize: async () => {
-        if (get().isInitialized) return;
+        await ensureInitialized(async () => {
+          console.log('[Store] Initializing with race condition prevention...');
 
-        const notes = await db.notes.toArray();
-        const folders = await db.folders.toArray();
-        const connections = await db.connections.toArray();
-        const patches = await db.patches.toArray();
-        const featureFlags = await db.featureFlags.toArray();
-        const auditLog = await db.auditLog.toArray();
+          const notes = await db.notes.toArray();
+          const folders = await db.folders.toArray();
+          const connections = await db.connections.toArray();
+          const patches = await db.patches.toArray();
+          const featureFlags = await db.featureFlags.toArray();
+          const auditLog = await db.auditLog.toArray();
 
-        // If DB is empty, seed with initial data
-        if (notes.length === 0 && folders.length === 0) {
-          await db.notes.bulkAdd(initialNotes);
-          await db.folders.bulkAdd(initialFolders);
-          await db.patches.bulkAdd(initialPatches);
-          await db.featureFlags.bulkAdd(initialFeatureFlags);
-          await db.auditLog.bulkAdd(initialAuditLog);
-          
-          set({
-            notes: initialNotes,
-            folders: initialFolders,
-            patches: initialPatches,
-            featureFlags: initialFeatureFlags,
-            auditLog: initialAuditLog,
-            activeNoteId: initialNotes.length > 0 ? initialNotes[0].id : null,
-          });
-        } else {
-          set({
-            notes,
-            folders,
-            connections,
-            patches,
-            featureFlags,
-            auditLog,
-            activeNoteId: notes.length > 0 ? notes[0].id : null,
-          });
-        }
+          // If DB is empty, seed with initial data
+          if (notes.length === 0 && folders.length === 0) {
+            await db.notes.bulkAdd(initialNotes);
+            await db.folders.bulkAdd(initialFolders);
+            await db.patches.bulkAdd(initialPatches);
+            await db.featureFlags.bulkAdd(initialFeatureFlags);
+            await db.auditLog.bulkAdd(initialAuditLog);
+
+            set({
+              notes: initialNotes,
+              folders: initialFolders,
+              patches: initialPatches,
+              featureFlags: initialFeatureFlags,
+              auditLog: initialAuditLog,
+              activeNoteId: initialNotes.length > 0 ? initialNotes[0].id : null,
+            });
+          } else {
+            set({
+              notes,
+              folders,
+              connections,
+              patches,
+              featureFlags,
+              auditLog,
+              activeNoteId: notes.length > 0 ? notes[0].id : null,
+            });
+          }
+
+          console.log('[Store] Initialization complete');
+        });
+
         set({ isInitialized: true });
       },
 
@@ -120,6 +128,7 @@ export const useStore = create<AppState>()(
       setFeatureFlags: (featureFlags) => set({ featureFlags }),
       setAuditLog: (auditLog) => set({ auditLog }),
 
+      // FIXED: Use optimistic updates with rollback
       createNewNote: async () => {
         const { activeFolderId } = get();
         const newNote: Note = {
@@ -134,56 +143,88 @@ export const useStore = create<AppState>()(
           type: 'text',
           attachments: [],
         };
-        await db.notes.add(newNote);
-        set((state) => ({
-          notes: [newNote, ...state.notes],
-          activeNoteId: newNote.id,
-          view: View.Notes,
-        }));
+
+        await optimisticUpdate(
+          // Optimistic local update
+          () => set((state) => ({
+            notes: [newNote, ...state.notes],
+            activeNoteId: newNote.id,
+            view: View.Notes,
+          })),
+          // Database persist
+          () => db.notes.add(newNote),
+          // Rollback on error
+          () => set((state) => ({
+            notes: state.notes.filter(n => n.id !== newNote.id),
+            activeNoteId: state.notes.length > 0 ? state.notes[0].id : null,
+          }))
+        );
       },
 
       updateNote: async (updatedNote) => {
         const noteWithTimestamp = { ...updatedNote, updatedAt: new Date().toISOString() };
-        await db.notes.put(noteWithTimestamp);
-        set((state) => ({
-          notes: state.notes.map((note) =>
-            note.id === updatedNote.id ? noteWithTimestamp : note
-          ),
-        }));
+        const oldNotes = get().notes;
+
+        await optimisticUpdate(
+          () => set((state) => ({
+            notes: state.notes.map((note) =>
+              note.id === updatedNote.id ? noteWithTimestamp : note
+            ),
+          })),
+          () => db.notes.put(noteWithTimestamp),
+          () => set({ notes: oldNotes })
+        );
       },
 
       deleteNote: async (id) => {
-        await db.notes.delete(id);
-        set((state) => ({
-          notes: state.notes.filter((note) => note.id !== id),
-          activeNoteId: state.activeNoteId === id ? null : state.activeNoteId,
-        }));
+        const oldNotes = get().notes;
+        const oldActiveId = get().activeNoteId;
+
+        await optimisticUpdate(
+          () => set((state) => ({
+            notes: state.notes.filter((note) => note.id !== id),
+            activeNoteId: state.activeNoteId === id ? null : state.activeNoteId,
+          })),
+          () => db.notes.delete(id),
+          () => set({ notes: oldNotes, activeNoteId: oldActiveId })
+        );
       },
 
       addFolder: async (name) => {
         const { folders } = get();
         if (folders.some((f) => f.name === name)) {
-          alert('A folder with this name already exists.');
-          return;
+          throw new Error('A folder with this name already exists.');
         }
+
         const newFolder: Folder = {
           id: `folder-${Date.now()}`,
           name: name,
           createdAt: new Date().toISOString(),
           description: '',
         };
-        await db.folders.add(newFolder);
-        set((state) => ({
-          folders: [...state.folders, newFolder],
-          activeFolderId: newFolder.id,
-        }));
+
+        await optimisticUpdate(
+          () => set((state) => ({
+            folders: [...state.folders, newFolder],
+            activeFolderId: newFolder.id,
+          })),
+          () => db.folders.add(newFolder),
+          () => set((state) => ({
+            folders: state.folders.filter(f => f.id !== newFolder.id),
+          }))
+        );
       },
 
       updateFolder: async (updatedFolder) => {
-        await db.folders.put(updatedFolder);
-        set((state) => ({
-          folders: state.folders.map((f) => (f.id === updatedFolder.id ? updatedFolder : f)),
-        }));
+        const oldFolders = get().folders;
+
+        await optimisticUpdate(
+          () => set((state) => ({
+            folders: state.folders.map((f) => (f.id === updatedFolder.id ? updatedFolder : f)),
+          })),
+          () => db.folders.put(updatedFolder),
+          () => set({ folders: oldFolders })
+        );
       },
 
       reorderFolders: async (draggedId, targetId) => {
@@ -191,15 +232,13 @@ export const useStore = create<AppState>()(
         const draggedIndex = folders.findIndex((f) => f.id === draggedId);
         const targetIndex = folders.findIndex((f) => f.id === targetId);
         if (draggedIndex === -1 || targetIndex === -1) return;
-        
+
         const newFolders = [...folders];
         const [draggedItem] = newFolders.splice(draggedIndex, 1);
         newFolders.splice(targetIndex, 0, draggedItem);
-        
-        // In a real app, you might want to update a 'sortOrder' property in DB
-        // For now, we'll just clear and re-add to maintain order if needed, 
-        // but bulkPut is better if we had a sortOrder.
+
         set({ folders: newFolders });
+        // Note: Consider adding sortOrder field for persistence
       },
 
       handlePatchStatusChange: async (patchId, status) => {
@@ -209,9 +248,10 @@ export const useStore = create<AppState>()(
           timestamp: new Date().toISOString(),
           status,
         };
+
         await db.auditLog.add(newLog);
         await db.patches.update(patchId, { status });
-        
+
         set((state) => ({
           patches: state.patches.map((p) => (p.id === patchId ? { ...p, status } : p)),
           auditLog: [newLog, ...state.auditLog],
@@ -221,9 +261,10 @@ export const useStore = create<AppState>()(
       handleToggleFeatureFlag: async (flagId) => {
         const flag = get().featureFlags.find(f => f.id === flagId);
         if (!flag) return;
+
         const updatedFlag = { ...flag, isEnabled: !flag.isEnabled };
         await db.featureFlags.put(updatedFlag);
-        
+
         set((state) => ({
           featureFlags: state.featureFlags.map((f) =>
             f.id === flagId ? updatedFlag : f
