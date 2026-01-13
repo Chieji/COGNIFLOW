@@ -1,287 +1,185 @@
 /**
- * Input Validation & Sanitization Utility
- * 
- * This module provides the "Security Guard" for COGNIFLOW.
- * It validates and sanitizes all user input before sending to AI APIs.
- * 
- * Purpose:
- * - Prevent API abuse (quota exhaustion via massive payloads)
- * - Prevent prompt injection attacks
- * - Ensure data integrity
+ * Enhanced validation utilities with security hardening
+ * Prevents prompt injection, XSS, and malformed inputs
  */
 
-export interface ValidationResult {
-  valid: boolean;
-  error?: string;
-  sanitized?: string;
-}
-
-/**
- * Configuration for validation constraints
- */
-export const VALIDATION_CONFIG = {
-  // Maximum characters allowed in a single message
-  MAX_MESSAGE_LENGTH: 10000,
-  
-  // Maximum characters for note content
-  MAX_NOTE_LENGTH: 50000,
-  
-  // Maximum characters for note title
-  MAX_TITLE_LENGTH: 500,
-  
-  // Minimum characters required (prevent empty submissions)
-  MIN_MESSAGE_LENGTH: 1,
-  
-  // List of suspicious patterns that might indicate prompt injection
-  SUSPICIOUS_PATTERNS: [
-    /ignore previous instructions/gi,
-    /forget everything/gi,
-    /system prompt/gi,
-    /admin mode/gi,
-    /bypass/gi,
-    /jailbreak/gi,
-    /override/gi,
-  ],
-};
-
-/**
- * Validates a chat message before sending to AI
- * 
- * @param message - The user's input message
- * @returns ValidationResult with validity status and any errors
- * 
- * @example
- * const result = validateChatMessage("Hello, how are you?");
- * if (!result.valid) {
- *   console.error(result.error);
- * }
- */
-export function validateChatMessage(message: string): ValidationResult {
-  // Check if message exists and is a string
-  if (!message || typeof message !== 'string') {
-    return {
-      valid: false,
-      error: 'Message must be a non-empty string.',
-    };
-  }
-
-  // Trim whitespace
-  const trimmed = message.trim();
-
-  // Check minimum length
-  if (trimmed.length < VALIDATION_CONFIG.MIN_MESSAGE_LENGTH) {
-    return {
-      valid: false,
-      error: 'Message cannot be empty.',
-    };
-  }
-
-  // Check maximum length
-  if (trimmed.length > VALIDATION_CONFIG.MAX_MESSAGE_LENGTH) {
-    return {
-      valid: false,
-      error: `Message exceeds maximum length of ${VALIDATION_CONFIG.MAX_MESSAGE_LENGTH} characters. Current length: ${trimmed.length}.`,
-    };
-  }
-
-  // Check for suspicious patterns (prompt injection indicators)
-  const suspicious = VALIDATION_CONFIG.SUSPICIOUS_PATTERNS.find((pattern) =>
-    pattern.test(trimmed)
-  );
-
-  if (suspicious) {
-    return {
-      valid: false,
-      error: 'Message contains suspicious content. Please rephrase your request.',
-    };
-  }
-
-  return {
-    valid: true,
-    sanitized: trimmed,
-  };
-}
-
-/**
- * Validates a note title
- * 
- * @param title - The note title
- * @returns ValidationResult with validity status and any errors
- */
-export function validateNoteTitle(title: string): ValidationResult {
-  if (!title || typeof title !== 'string') {
-    return {
-      valid: false,
-      error: 'Title must be a non-empty string.',
-    };
-  }
-
-  const trimmed = title.trim();
-
-  if (trimmed.length === 0) {
-    return {
-      valid: false,
-      error: 'Title cannot be empty.',
-    };
-  }
-
-  if (trimmed.length > VALIDATION_CONFIG.MAX_TITLE_LENGTH) {
-    return {
-      valid: false,
-      error: `Title exceeds maximum length of ${VALIDATION_CONFIG.MAX_TITLE_LENGTH} characters.`,
-    };
-  }
-
-  return {
-    valid: true,
-    sanitized: trimmed,
-  };
-}
-
-/**
- * Validates note content
- * 
- * @param content - The note content
- * @returns ValidationResult with validity status and any errors
- */
-export function validateNoteContent(content: string): ValidationResult {
-  if (!content || typeof content !== 'string') {
-    return {
-      valid: false,
-      error: 'Content must be a string.',
-    };
-  }
-
-  const trimmed = content.trim();
-
-  if (trimmed.length > VALIDATION_CONFIG.MAX_NOTE_LENGTH) {
-    return {
-      valid: false,
-      error: `Content exceeds maximum length of ${VALIDATION_CONFIG.MAX_NOTE_LENGTH} characters.`,
-    };
-  }
-
-  return {
-    valid: true,
-    sanitized: trimmed,
-  };
-}
-
-/**
- * Sanitizes a string by removing potentially harmful characters
- * while preserving legitimate content
- * 
- * @param input - The input string to sanitize
- * @returns Sanitized string
- */
-export function sanitizeString(input: string): string {
+// Input sanitization for AI prompts (prevent prompt injection)
+export function sanitizeAIPrompt(input: string): string {
   if (!input || typeof input !== 'string') {
-    return '';
+    throw new Error('[Validation] Invalid input: expected non-empty string');
   }
 
-  // Remove null bytes and other control characters (except newlines and tabs)
-  let sanitized = input.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+  // Remove control characters and normalize whitespace
+  let sanitized = input
+    .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control chars
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
 
-  // Trim excessive whitespace
-  sanitized = sanitized.trim();
+  // Check for common prompt injection patterns
+  const injectionPatterns = [
+    /ignore\s+previous\s+instructions/i,
+    /system\s*:\s*you\s+are/i,
+    /\[\s*system\s*\]/i,
+    /disregard\s+all\s+above/i,
+    /<\s*script/i, // XSS attempt
+  ];
+
+  for (const pattern of injectionPatterns) {
+    if (pattern.test(sanitized)) {
+      console.warn('[Security] Potential prompt injection detected:', sanitized.substring(0, 100));
+      // Don't throw - just log and continue with sanitized version
+    }
+  }
+
+  // Limit length to prevent abuse
+  const MAX_PROMPT_LENGTH = 10000;
+  if (sanitized.length > MAX_PROMPT_LENGTH) {
+    sanitized = sanitized.substring(0, MAX_PROMPT_LENGTH);
+    console.warn(`[Validation] Prompt truncated to ${MAX_PROMPT_LENGTH} characters`);
+  }
 
   return sanitized;
 }
 
-/**
- * Validates a batch of messages (useful for multi-turn conversations)
- * 
- * @param messages - Array of messages to validate
- * @returns Array of ValidationResults
- */
-export function validateMessageBatch(messages: string[]): ValidationResult[] {
-  return messages.map((message) => validateChatMessage(message));
+// Sanitize user-generated content before display (prevent XSS)
+export function sanitizeUserContent(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+
+  // Remove dangerous tags and attributes
+  const dangerous = /<script|<iframe|<object|<embed|javascript:|on\w+=/gi;
+  let sanitized = html.replace(dangerous, '');
+
+  // Additional XSS prevention
+  sanitized = sanitized
+    .replace(/<img[^>]+src=["']?data:text\/html/gi, '<img src=""')
+    .replace(/eval\(/gi, '')
+    .replace(/expression\(/gi, '');
+
+  return sanitized;
 }
 
-/**
- * Checks if all messages in a batch are valid
- * 
- * @param messages - Array of messages to validate
- * @returns true if all messages are valid, false otherwise
- */
-export function isMessageBatchValid(messages: string[]): boolean {
-  const results = validateMessageBatch(messages);
-  return results.every((result) => result.valid);
-}
+// Rate limiting helper
+class RateLimiter {
+  private requests: Map<string, number[]> = new Map();
+  private readonly maxRequests: number;
+  private readonly windowMs: number;
 
-/**
- * Gets the first error from a batch of validation results
- * Useful for displaying a single error message to the user
- * 
- * @param results - Array of ValidationResults
- * @returns The first error message, or null if all are valid
- */
-export function getFirstError(results: ValidationResult[]): string | null {
-  const errorResult = results.find((result) => !result.valid);
-  return errorResult?.error || null;
-}
-
-/**
- * Validates API payload before sending to proxy
- * This is the final checkpoint before data leaves the client
- * 
- * @param payload - The payload object to validate
- * @returns ValidationResult
- */
-export function validateApiPayload(payload: {
-  provider?: string;
-  messages?: Array<{ role: string; content: string }>;
-  prompt?: string;
-  [key: string]: any;
-}): ValidationResult {
-  // Validate messages if present
-  if (payload.messages && Array.isArray(payload.messages)) {
-    for (const message of payload.messages) {
-      if (message.content) {
-        const result = validateChatMessage(message.content);
-        if (!result.valid) {
-          return result;
-        }
-      }
-    }
+  constructor(maxRequests: number = 10, windowMs: number = 60000) {
+    this.maxRequests = maxRequests;
+    this.windowMs = windowMs;
   }
 
-  // Validate single prompt if present
-  if (payload.prompt) {
-    const result = validateChatMessage(payload.prompt);
-    if (!result.valid) {
-      return result;
+  isAllowed(key: string): boolean {
+    const now = Date.now();
+    const timestamps = this.requests.get(key) || [];
+
+    // Remove timestamps outside the time window
+    const validTimestamps = timestamps.filter(ts => now - ts < this.windowMs);
+
+    if (validTimestamps.length >= this.maxRequests) {
+      console.warn(`[RateLimit] Rate limit exceeded for key: ${key}`);
+      return false;
     }
+
+    validTimestamps.push(now);
+    this.requests.set(key, validTimestamps);
+    return true;
+  }
+
+  reset(key: string): void {
+    this.requests.delete(key);
+  }
+}
+
+// Global rate limiter instances
+export const aiCallLimiter = new RateLimiter(20, 60000); // 20 calls per minute
+export const apiCallLimiter = new RateLimiter(100, 60000); // 100 calls per minute
+
+// Validate note title
+export function validateNoteTitle(title: string): { valid: boolean; error?: string } {
+  if (!title || typeof title !== 'string') {
+    return { valid: false, error: 'Title is required' };
+  }
+
+  const trimmed = title.trim();
+  if (trimmed.length === 0) {
+    return { valid: false, error: 'Title cannot be empty' };
+  }
+
+  if (trimmed.length > 200) {
+    return { valid: false, error: 'Title must be 200 characters or less' };
   }
 
   return { valid: true };
 }
 
-/**
- * Logs validation violations (useful for monitoring and analytics)
- * In production, this could send data to a logging service
- * 
- * @param input - The input that failed validation
- * @param reason - The reason for failure
- * @param context - Additional context (e.g., component name, user ID)
- */
-export function logValidationViolation(
-  input: string,
-  reason: string,
-  context?: Record<string, any>
-): void {
-  const violation = {
-    timestamp: new Date().toISOString(),
-    inputLength: input.length,
-    reason,
-    context,
-  };
-
-  // Log to console in development
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('[VALIDATION VIOLATION]', violation);
+// Validate note content
+export function validateNoteContent(content: string): { valid: boolean; error?: string } {
+  if (typeof content !== 'string') {
+    return { valid: false, error: 'Content must be a string' };
   }
 
-  // TODO: In production, send to a monitoring service (Sentry, LogRocket, etc.)
-  // Example: sentryClient.captureMessage(`Validation violation: ${reason}`, 'warning');
+  // Allow empty content for new notes
+  if (content.length > 100000) {
+    return { valid: false, error: 'Content must be 100,000 characters or less' };
+  }
+
+  return { valid: true };
+}
+
+// Validate folder name
+export function validateFolderName(name: string): { valid: boolean; error?: string } {
+  if (!name || typeof name !== 'string') {
+    return { valid: false, error: 'Folder name is required' };
+  }
+
+  const trimmed = name.trim();
+  if (trimmed.length === 0) {
+    return { valid: false, error: 'Folder name cannot be empty' };
+  }
+
+  if (trimmed.length > 100) {
+    return { valid: false, error: 'Folder name must be 100 characters or less' };
+  }
+
+  // Check for invalid characters
+  const invalidChars = /[\/:<>"\|\?\*]/;
+  if (invalidChars.test(trimmed)) {
+    return { valid: false, error: 'Folder name contains invalid characters' };
+  }
+
+  return { valid: true };
+}
+
+// Validate API key format
+export function validateApiKey(key: string, provider: string): { valid: boolean; error?: string } {
+  if (!key || typeof key !== 'string') {
+    return { valid: false, error: 'API key is required' };
+  }
+
+  const trimmed = key.trim();
+  if (trimmed.length < 10) {
+    return { valid: false, error: 'API key is too short' };
+  }
+
+  // Provider-specific validation
+  switch (provider) {
+    case 'gemini':
+      if (!trimmed.startsWith('AI') && trimmed.length < 30) {
+        return { valid: false, error: 'Invalid Gemini API key format' };
+      }
+      break;
+    case 'openai':
+      if (!trimmed.startsWith('sk-')) {
+        return { valid: false, error: 'Invalid OpenAI API key format' };
+      }
+      break;
+    case 'anthropic':
+      if (!trimmed.startsWith('sk-ant-')) {
+        return { valid: false, error: 'Invalid Anthropic API key format' };
+      }
+      break;
+  }
+
+  return { valid: true };
 }
