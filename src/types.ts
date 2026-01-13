@@ -108,6 +108,14 @@ export interface AuditLogEntry {
     status: 'approved' | 'rejected';
 }
 
+export interface ChatMessage {
+  id?: number;
+  threadId: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
 // Represents a function the AI can call
 export type AiTool = 'create_note' | 'update_note' | 'add_tags_to_note' | 'propose_code_patch' | 'create_folder' | 'update_folder_description' | 'delete_folder' | 'explain_note_connections' | 'get_note_content' | 'set_note_metadata' | 'update_note_title' | 'move_note_to_folder' | 'list_folders' | 'write_file' | 'cleanup_note_content' | 'organize_notes_by_topic' | 'create_note_from_conversation';
 

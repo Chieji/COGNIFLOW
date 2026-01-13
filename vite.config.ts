@@ -82,7 +82,7 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       lib: {
-        entry: path.resolve(__dirname, 'index.tsx'),
+        entry: path.resolve(__dirname, 'src/index.tsx'),
         name: 'Cogniflow',
         formats: ['es', 'umd'],
         fileName: (format) => `cogniflow.${format === 'umd' ? 'umd' : 'es'}.js`
