@@ -205,9 +205,57 @@ const App: React.FC = () => {
         updateNote({ ...note, content: content });
         return `Successfully wrote content to note ${note_id}.`;
       }
+      case 'cleanup_note_content': {
+        const { note_id } = action.args;
+        const note = notes.find((n) => n.id === note_id);
+        if (!note) return `Error: Note with ID '${note_id}' not found.`;
+        
+        // For now, we'll use a simple cleanup. In a real implementation, 
+        // this could call an AI service to clean up the content
+        const cleanedContent = note.content
+          .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+          .replace(/\s+/g, ' ') // Normalize whitespace
+          .trim();
+        
+        updateNote({ ...note, content: cleanedContent });
+        return `Successfully cleaned up content for note "${note.title}".`;
+      }
+      case 'organize_notes_by_topic': {
+        const { note_ids } = action.args;
+        // This is a complex operation that would require AI analysis
+        // For now, we'll create a simple organization suggestion
+        return `I would need to analyze the ${note_ids.length} notes to suggest organization. This feature is under development.`;
+      }
+      case 'create_note_from_conversation': {
+        const { title, content, tags, folder_id } = action.args;
+        const confirmationMessage = `The AI wants to create a note from our conversation:\n\nTitle: ${title}\n\nContent:\n${content.substring(0, 200)}${content.length > 200 ? '...' : ''}\n\nDo you want to proceed?`;
+        if (!window.confirm(confirmationMessage)) return 'Note creation cancelled by user.';
+        
+        if (folder_id && !folders.some((f) => f.id === folder_id)) return `Error: Folder with ID '${folder_id}' does not exist.`;
+        
+        const newNote: Note = {
+          id: `note-${Date.now()}`,
+          title,
+          content,
+          summary: '',
+          tags: tags || [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          folderId: folder_id || null,
+          type: 'text',
+          attachments: [],
+        };
+        setNotes([newNote, ...notes]);
+        return `Successfully created note "${title}" from our conversation.`;
+      }
       default:
         return `Error: Unknown tool '${action.tool}'.`;
     }
+  };
+
+  const onAskAI = (note: Note) => {
+    setActiveNoteId(note.id);
+    setView(View.Chat);
   };
 
   const onExport = () => {
@@ -296,7 +344,7 @@ const App: React.FC = () => {
             />
             <div className={`flex-1 ${!activeNote ? 'hidden md:flex' : 'flex'}`}>
               {activeNote ? (
-                <NoteEditor note={activeNote} updateNote={updateNote} settings={settings} />
+                <NoteEditor note={activeNote} updateNote={updateNote} settings={settings} onAskAI={onAskAI} />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center p-8">
                   <BrainCircuitIcon className="w-16 h-16 mb-4 text-gray-400 dark:text-gray-500" />
@@ -317,7 +365,7 @@ const App: React.FC = () => {
             setView={setView}
           />
         )}
-        {view === View.Chat && <AssistantChat settings={settings} notes={notes} folders={folders} onAiAction={handleAiAction} />}
+        {view === View.Chat && <AssistantChat settings={settings} notes={notes} folders={folders} onAiAction={handleAiAction} currentNote={activeNote} />}
         {view === View.DevStudio && (
           <DevStudioView
             patches={patches}

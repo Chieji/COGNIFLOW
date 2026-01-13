@@ -4,19 +4,20 @@ import { summarizeAndTagNote, analyzeVisualMedia, generateSpeech } from '../serv
 import { decode, decodeAudioData, blobToBase64 } from '../utils';
 import Tag from './Tag';
 import Spinner from './Spinner';
-import { SparklesIcon, PaperclipIcon, CameraIcon, MicIcon, XCircleIcon, PlayCircleIcon, BrainCircuitIcon, LoaderIcon, Volume2Icon, Share2Icon } from './icons';
+import { SparklesIcon, PaperclipIcon, CameraIcon, MicIcon, XCircleIcon, PlayCircleIcon, BrainCircuitIcon, LoaderIcon, Volume2Icon, Share2Icon, MessageCircleIcon } from './icons';
 
 interface NoteEditorProps {
   note: Note;
   settings: AiSettings;
   updateNote: (note: Note) => void;
+  onAskAI?: (note: Note) => void;
 }
 
 const LanguageBadge: React.FC<{ language: string }> = ({ language }) => (
     <span className="ml-2 px-2 py-0.5 bg-gray-200 dark:bg-dark-secondary text-xs font-semibold rounded-full text-gray-500 dark:text-gray-300 capitalize">{language}</span>
 );
 
-const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote }) => {
+const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onAskAI }) => {
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
   const [isInsightsLoading, setIsInsightsLoading] = useState(false);
@@ -405,6 +406,16 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote }) =
                 {isInsightsLoading ? <Spinner /> : <SparklesIcon className="w-5 h-5 mr-2" />}
                 Analyze Note
             </button>
+            {onAskAI && (
+                <button 
+                    onClick={() => onAskAI(note)} 
+                    className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    title="Ask AI to help with this note"
+                >
+                    <MessageCircleIcon className="w-5 h-5 mr-2" />
+                    Ask AI
+                </button>
+            )}
         </div>
       </div>
       

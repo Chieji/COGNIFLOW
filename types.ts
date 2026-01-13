@@ -105,7 +105,7 @@ export interface AuditLogEntry {
 }
 
 // Represents a function the AI can call
-export type AiTool = 'create_note' | 'update_note' | 'add_tags_to_note' | 'propose_code_patch' | 'create_folder' | 'update_folder_description' | 'delete_folder' | 'explain_note_connections' | 'get_note_content' | 'set_note_metadata' | 'update_note_title' | 'move_note_to_folder' | 'list_folders' | 'write_file';
+export type AiTool = 'create_note' | 'update_note' | 'add_tags_to_note' | 'propose_code_patch' | 'create_folder' | 'update_folder_description' | 'delete_folder' | 'explain_note_connections' | 'get_note_content' | 'set_note_metadata' | 'update_note_title' | 'move_note_to_folder' | 'list_folders' | 'write_file' | 'cleanup_note_content' | 'organize_notes_by_topic' | 'create_note_from_conversation';
 
 // FIXED: Replaced 'any' with proper union types for all possible tool arguments
 export type AiToolArgs = 
@@ -122,7 +122,10 @@ export type AiToolArgs =
   | UpdateNoteTitleArgs
   | MoveNoteToFolderArgs
   | ListFoldersArgs
-  | WriteFileArgs;
+  | WriteFileArgs
+  | CleanupNoteContentArgs
+  | OrganizeNotesByTopicArgs
+  | CreateNoteFromConversationArgs;
 
 // Define argument interfaces for each tool
 export interface CreateNoteArgs {
@@ -198,6 +201,21 @@ export interface ListFoldersArgs {
 export interface WriteFileArgs {
   path: string;
   content: string;
+}
+
+export interface CleanupNoteContentArgs {
+  noteId: string;
+}
+
+export interface OrganizeNotesByTopicArgs {
+  noteIds: string[];
+}
+
+export interface CreateNoteFromConversationArgs {
+  title: string;
+  content: string;
+  tags?: string[];
+  folderId?: string;
 }
 
 // Represents an action the app should take based on AI output

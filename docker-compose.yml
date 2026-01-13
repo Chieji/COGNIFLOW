@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  cogniflow-dev:
+    build: .
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev -- --host 0.0.0.0
+    networks:
+      - cogniflow-network
+
+  # Optional: Ollama for local AI models
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - cogniflow-network
+    # Uncomment and modify to pull models on startup
+    # command: ["ollama", "serve"]
+    # environment:
+    #   - OLLAMA_MODELS=/root/.ollama/models
+
+volumes:
+  ollama-data:
+
+networks:
+  cogniflow-network:
+    driver: bridge

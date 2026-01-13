@@ -15,6 +15,22 @@
 
 **COGNIFLOW** is a professional-grade application designed for developers, researchers, and power users to organize thoughts, code snippets, and research into an interconnected, AI-enhanced knowledge graph. It bridges the gap between structured note-taking and active development, providing a seamless environment for discovery and creation.
 
+## 📋 Project Status & Roadmap
+
+COGNIFLOW is currently in **Phase 3: Production Readiness**. See our [ROADMAP.md](ROADMAP.md) for detailed development plans and upcoming features.
+
+**Recent Achievements:**
+- ✅ AI chat interface with professional UX
+- ✅ Knowledge graph visualization
+- ✅ Environment variable configuration
+- ✅ Database performance optimization
+- ✅ Docker development environment
+
+**Next Priorities:**
+- 🔄 Docker deployment setup
+- 🔄 GitHub Pages live demo
+- 🔄 Performance monitoring dashboard
+
 ## ✨ Latest Updates
 
 - **Professional AI Interface**: Integrated `assistant-ui` for a sophisticated, streaming chat experience with real-time feedback and advanced message threading.
@@ -48,6 +64,8 @@ npm install @chieji/cogniflow
 ```
 
 ### Development Setup
+
+#### Option 1: Local Development
 1. **Clone & Install**:
    ```bash
    git clone https://github.com/Chieji/COGNIFLOW.git
@@ -55,14 +73,34 @@ npm install @chieji/cogniflow
    npm install
    ```
 2. **Configure Environment**:
-   Create `.env.local` for the client-side proxy URL:
-   ```env
-   VITE_API_PROXY_URL="http://localhost:3001/api/proxy"
+   Copy `.env.example` to `.env` and fill in your API keys:
+   ```bash
+   cp .env.example .env
    ```
 3. **Run Development Server**:
    ```bash
    npm run dev
    ```
+
+#### Option 2: Docker Development
+1. **Prerequisites**: Install Docker and Docker Compose
+2. **Clone & Run**:
+   ```bash
+   git clone https://github.com/Chieji/COGNIFLOW.git
+   cd COGNIFLOW
+   docker-compose up --build
+   ```
+3. **Access**: Open http://localhost:5173
+
+#### Optional: Local AI with Ollama
+To use local AI models, start Ollama in the Docker environment:
+```bash
+docker-compose up ollama
+```
+Then pull models:
+```bash
+docker-compose exec ollama ollama pull llama2
+```
 
 ## 🛡 Security
 

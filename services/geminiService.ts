@@ -339,6 +339,42 @@ const tools: FunctionDeclaration[] = [
             type: Type.OBJECT,
             properties: {},
         },
+    },
+    {
+        name: "cleanup_note_content",
+        description: "Cleans up and organizes the content of a note by removing duplicates, improving formatting, fixing grammar, and making it more readable.",
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                note_id: { type: Type.STRING, description: "The ID of the note to clean up." },
+            },
+            required: ["note_id"],
+        },
+    },
+    {
+        name: "organize_notes_by_topic",
+        description: "Analyzes multiple notes and suggests how to organize them by creating appropriate folders and moving notes to those folders.",
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                note_ids: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Array of note IDs to organize." },
+            },
+            required: ["note_ids"],
+        },
+    },
+    {
+        name: "create_note_from_conversation",
+        description: "Creates a new note based on the current conversation context. Useful when users describe ideas, tasks, or information that should be saved.",
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                title: { type: Type.STRING, description: "A descriptive title for the note." },
+                content: { type: Type.STRING, description: "The content to save in the note." },
+                tags: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Optional tags for the note." },
+                folder_id: { type: Type.STRING, description: "Optional folder to place the note in." },
+            },
+            required: ["title", "content"],
+        },
     }
 ];
 
@@ -352,7 +388,8 @@ export const processChatTurn = async (
     onExecuteAction: (action: AiAction) => string,
     model: string,
     thinkingBudget: number | null,
-    onChunk: (text: string) => void
+    onChunk: (text: string) => void,
+    currentNote?: Note | null
 ): Promise<{ citations: Citation[] }> => {
     if (!apiKey) {
         throw new Error("API key for Gemini is not configured.");
@@ -370,9 +407,34 @@ export const processChatTurn = async (
       ? `Here is a list of available folders the user has. Use their IDs when a tool requires a folder_id:\n${JSON.stringify(folderOptionsForPrompt)}\n\n`
       : "";
 
+    const currentNoteContext = currentNote 
+      ? `CURRENT NOTE CONTEXT: You are currently helping with the note "${currentNote.title}" (ID: ${currentNote.id}). The note contains:\n\n${currentNote.content}\n\nWhen the user asks you to modify, organize, or work with "this note" or "the current note", refer to this note.\n\n`
+      : "";
+
     const systemInstruction = `You are CogniFlow's Architect, a helpful AI assistant within a personal knowledge management app. Your mission is to be helpful, proactive, and capable of modifying the app's own functionality through code patches. You have access to a list of the user's notes and folders.
+
+${currentNoteContext}
 ${notesContext}
 ${foldersContext}
+
+IMPORTANT CAPABILITIES:
+- You can CREATE, READ, UPDATE, and DELETE notes and folders
+- When users describe content that should be saved as a note, proactively offer to create it
+- When users ask you to organize, clean up, or arrange notes, use the available tools
+- When users want to remember something, suggest creating a note
+- You have full permissions to manage the user's knowledge base
+
+NATURAL LANGUAGE NOTE CREATION:
+- If a user describes content that would benefit from being saved (ideas, tasks, reminders, research, etc.), offer to create a note
+- When creating notes from conversation, give them descriptive titles and organize content logically
+- Suggest appropriate tags and folder organization
+
+NOTE MANAGEMENT:
+- Help users organize their thoughts by creating structured notes
+- Clean up and reorganize existing notes when requested
+- Create connections between related notes
+- Update note content, titles, and metadata as needed
+
 When asked to read notes, create or manage notes and folders, or propose code changes, you must use the provided tools. Be concise and helpful in your responses to the user. When searching the web, provide citations for your answers.`;
 
     try {
