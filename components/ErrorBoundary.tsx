@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { errorTracking } from '../services/errorTrackingService';
 
 interface Props {
   children: ReactNode;
@@ -21,8 +22,6 @@ interface State {
  *   <YourComponent />
  * </ErrorBoundary>
  */
-import { errorTracking } from '../services/errorTrackingService';
-
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -55,6 +54,7 @@ export class ErrorBoundary extends Component<Props, State> {
   logErrorToService(error: Error, errorInfo: ErrorInfo): void {
     errorTracking.logError(error, errorInfo.componentStack);
   }
+
 
   handleReset = (): void => {
     this.setState({
