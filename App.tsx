@@ -10,6 +10,7 @@ import DevStudioView from './components/DevStudioView';
 import { BrainCircuitIcon } from './components/icons';
 import { useStore } from './store';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { jsPDF } from "jspdf";
 
 const App: React.FC = () => {
   const {
@@ -287,7 +288,53 @@ const App: React.FC = () => {
       a.click();
       URL.revokeObjectURL(url);
     } else {
-      alert("PDF export is coming soon!");
+      const doc = new jsPDF();
+      let yOffset = 10;
+      const pageHeight = doc.internal.pageSize.height;
+      const margin = 10;
+      const maxWidth = 190;
+
+      doc.setFontSize(18);
+      doc.text("Cogniflow Notes Export", margin, yOffset);
+      yOffset += 15;
+
+      notes.forEach((note) => {
+        if (yOffset > pageHeight - 30) {
+          doc.addPage();
+          yOffset = 10;
+        }
+
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(note.title, margin, yOffset);
+        yOffset += 7;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(100);
+        doc.text(`Created: ${new Date(note.createdAt).toLocaleString()} | Tags: ${note.tags.join(', ')}`, margin, yOffset);
+        doc.setTextColor(0);
+        yOffset += 7;
+
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        const splitContent = doc.splitTextToSize(note.content, maxWidth);
+
+        // Check if content fits, if not, add page
+        if (yOffset + (splitContent.length * 5) > pageHeight - 10) {
+          doc.addPage();
+          yOffset = 10;
+        }
+
+        doc.text(splitContent, margin, yOffset);
+        yOffset += (splitContent.length * 5) + 10;
+
+        // Separator
+        doc.setDrawColor(200);
+        doc.line(margin, yOffset - 5, margin + maxWidth, yOffset - 5);
+      });
+
+      doc.save(`cogniflow-export-${new Date().toISOString()}.pdf`);
     }
   };
 
