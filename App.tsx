@@ -9,6 +9,7 @@ import { AssistantChat } from './components/AssistantChat';
 import DevStudioView from './components/DevStudioView';
 import { BrainCircuitIcon } from './components/icons';
 import { useStore } from './store';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 const App: React.FC = () => {
   const {
@@ -209,14 +210,14 @@ const App: React.FC = () => {
         const { note_id } = action.args;
         const note = notes.find((n) => n.id === note_id);
         if (!note) return `Error: Note with ID '${note_id}' not found.`;
-        
+
         // For now, we'll use a simple cleanup. In a real implementation, 
         // this could call an AI service to clean up the content
         const cleanedContent = note.content
           .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
           .replace(/\s+/g, ' ') // Normalize whitespace
           .trim();
-        
+
         updateNote({ ...note, content: cleanedContent });
         return `Successfully cleaned up content for note "${note.title}".`;
       }
@@ -230,9 +231,9 @@ const App: React.FC = () => {
         const { title, content, tags, folder_id } = action.args;
         const confirmationMessage = `The AI wants to create a note from our conversation:\n\nTitle: ${title}\n\nContent:\n${content.substring(0, 200)}${content.length > 200 ? '...' : ''}\n\nDo you want to proceed?`;
         if (!window.confirm(confirmationMessage)) return 'Note creation cancelled by user.';
-        
+
         if (folder_id && !folders.some((f) => f.id === folder_id)) return `Error: Folder with ID '${folder_id}' does not exist.`;
-        
+
         const newNote: Note = {
           id: `note-${Date.now()}`,
           title,
@@ -258,16 +259,38 @@ const App: React.FC = () => {
     setView(View.Chat);
   };
 
-  const onExport = () => {
-    const data = { notes, folders, connections, settings, patches, featureFlags, auditLog };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `cogniflow-export-${new Date().toISOString()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+
+  const onExport = (format: 'json' | 'markdown' | 'pdf' = 'json') => {
+    if (format === 'json') {
+      const data = { notes, folders, connections, settings, patches, featureFlags, auditLog };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cogniflow-export-${new Date().toISOString()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'markdown') {
+      let content = '# Cogniflow Export\n\n';
+      notes.forEach(note => {
+        content += `## ${note.title}\n\n`;
+        content += `*Tags: ${note.tags.join(', ')}*\n`;
+        content += `*Created: ${new Date(note.createdAt).toLocaleString()}*\n\n`;
+        content += `${note.content}\n\n`;
+        content += `---\n\n`;
+      });
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cogniflow-export-${new Date().toISOString()}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      alert("PDF export is coming soon!");
+    }
   };
+
 
   const onImport = () => {
     const input = document.createElement('input');
@@ -377,6 +400,7 @@ const App: React.FC = () => {
         )}
       </main>
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} settings={settings} onSave={setSettings} />
+      <OfflineIndicator />
     </div>
   );
 };

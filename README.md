@@ -102,6 +102,19 @@ Then pull models:
 docker-compose exec ollama ollama pull llama2
 ```
 
+#### Testing
+COGNIFLOW includes a comprehensive test suite using Vitest:
+```bash
+# Run tests once
+npm test
+
+# Run tests in watch mode during development
+npm run test:watch
+
+# Run tests with UI for better debugging
+npm run test:ui
+```
+
 ## 🛡 Security
 
 COGNIFLOW uses a **Secure API Proxy** architecture. Your API keys are never exposed to the client-side. Ensure your keys are set as server-side environment variables on your deployment platform.

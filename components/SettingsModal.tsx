@@ -24,11 +24,11 @@ type TaskKey = keyof AiSettings['tasks'];
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, onSave }) => {
   const [currentSettings, setCurrentSettings] = useState<AiSettings>(settings);
   const [openSections, setOpenSections] = useState<Record<TaskKey, boolean>>({
-      chat: true,
-      summary: false,
-      translation: false,
+    chat: true,
+    summary: false,
+    translation: false,
   });
-  
+
   useEffect(() => {
     setCurrentSettings(settings);
   }, [settings, isOpen]);
@@ -40,9 +40,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
     onSave(currentSettings);
     onClose();
   };
-  
+
   const toggleSection = (section: TaskKey) => {
-      setOpenSections(prev => ({...prev, [section]: !prev[section]}));
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   }
 
   const handleKeyChange = (provider: AiProvider, key: string) => {
@@ -51,8 +51,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
       keys: { ...prev.keys, [provider]: key },
     }));
   };
-  
-   const handleModelIdChange = (modelId: string) => {
+
+  const handleModelIdChange = (modelId: string) => {
     setCurrentSettings(prev => ({
       ...prev,
       huggingface: { ...prev.huggingface, modelId },
@@ -72,151 +72,164 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
       universal: { ...prev.universal, [field]: value },
     }));
   };
-  
+
   const handleProviderChange = (task: TaskKey, provider: AiProvider) => {
     setCurrentSettings(prev => ({
-        ...prev,
-        tasks: {
-            ...prev.tasks,
-            [task]: { provider }
-        }
+      ...prev,
+      tasks: {
+        ...prev.tasks,
+        [task]: { provider }
+      }
     }))
   };
-  
+
   const TASKS: { id: TaskKey, name: string }[] = [
-      { id: 'chat', name: 'Chat' },
-      { id: 'summary', name: 'Summary' },
-      { id: 'translation', name: 'Translation' },
+    { id: 'chat', name: 'Chat' },
+    { id: 'summary', name: 'Summary' },
+    { id: 'translation', name: 'Translation' },
   ];
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-light-surface dark:bg-dark-surface rounded-lg shadow-xl w-full max-w-lg p-6 relative flex flex-col max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4 pb-4 border-b border-light-primary dark:border-dark-primary">
-            <h2 className="text-xl font-bold">Configure your AI settings</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-              <XIcon className="w-6 h-6" />
-            </button>
+          <h2 className="text-xl font-bold">Configure your AI settings</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <XIcon className="w-6 h-6" />
+          </button>
         </div>
-        
+
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Cogniflow comes with a built-in AI provider. But you can use any other AI providers by setting the API key in the settings.
+          Cogniflow comes with a built-in AI provider. But you can use any other AI providers by setting the API key in the settings.
         </p>
 
         <div className="flex-1 overflow-y-auto pr-2 space-y-2">
-            {TASKS.map(task => {
-                const selectedProvider = currentSettings.tasks[task.id].provider;
-                return (
-                    <div key={task.id} className="border border-light-primary dark:border-dark-primary rounded-lg">
-                        <button onClick={() => toggleSection(task.id)} className="w-full flex justify-between items-center p-3 font-semibold">
-                            <span>{task.name}</span>
-                            <ChevronDownIcon className={`w-5 h-5 transition-transform ${openSections[task.id] ? '' : '-rotate-90'}`} />
-                        </button>
-                        {openSections[task.id] && (
-                            <div className="p-4 border-t border-light-primary dark:border-dark-primary space-y-4">
-                                <div>
-                                    <label htmlFor={`${task.id}-provider`} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Provider
-                                    </label>
-                                    <select
-                                        id={`${task.id}-provider`}
-                                        value={selectedProvider}
-                                        onChange={(e) => handleProviderChange(task.id, e.target.value as AiProvider)}
-                                        className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
-                                    >
-                                        {PROVIDERS.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label htmlFor={`${selectedProvider}-key`} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        {PROVIDERS.find(p => p.id === selectedProvider)?.name} API Key
-                                    </label>
-                                    <input
-                                        type="password"
-                                        id={`${selectedProvider}-key`}
-                                        placeholder="Enter your API key"
-                                        value={currentSettings.keys[selectedProvider]}
-                                        onChange={(e) => handleKeyChange(selectedProvider, e.target.value)}
-                                        className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
-                                    />
-                                </div>
-                                {selectedProvider === 'huggingface' && (
-                                     <div>
-                                        <label htmlFor="hf-model-id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Model ID
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="hf-model-id"
-                                            placeholder="e.g., mistralai/Mistral-7B-Instruct-v0.2"
-                                            value={currentSettings.huggingface.modelId}
-                                            onChange={(e) => handleModelIdChange(e.target.value)}
-                                            className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
-                                        />
-                                    </div>
-                                )}
-                                {selectedProvider === 'universal' && (
-                                     <div className="space-y-4">
-                                        <div>
-                                            <label htmlFor="universal-base-url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                Base URL
-                                            </label>
-                                            <input
-                                                type="text"
-                                                id="universal-base-url"
-                                                placeholder="e.g., http://localhost:11434/v1"
-                                                value={currentSettings.universal.baseUrl}
-                                                onChange={(e) => handleUniversalChange('baseUrl', e.target.value)}
-                                                className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="universal-model-id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                Model ID
-                                            </label>
-                                            <input
-                                                type="text"
-                                                id="universal-model-id"
-                                                placeholder="e.g., llama3"
-                                                value={currentSettings.universal.modelId}
-                                                onChange={(e) => handleUniversalChange('modelId', e.target.value)}
-                                                className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+          {TASKS.map(task => {
+            const selectedProvider = currentSettings.tasks[task.id].provider;
+            return (
+              <div key={task.id} className="border border-light-primary dark:border-dark-primary rounded-lg">
+                <button onClick={() => toggleSection(task.id)} className="w-full flex justify-between items-center p-3 font-semibold">
+                  <span>{task.name}</span>
+                  <ChevronDownIcon className={`w-5 h-5 transition-transform ${openSections[task.id] ? '' : '-rotate-90'}`} />
+                </button>
+                {openSections[task.id] && (
+                  <div className="p-4 border-t border-light-primary dark:border-dark-primary space-y-4">
+                    <div>
+                      <label htmlFor={`${task.id}-provider`} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Provider
+                      </label>
+                      <select
+                        id={`${task.id}-provider`}
+                        value={selectedProvider}
+                        onChange={(e) => handleProviderChange(task.id, e.target.value as AiProvider)}
+                        className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
+                      >
+                        {PROVIDERS.map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
                     </div>
-                );
-            })}
-        
-        <div className="mt-4 p-4 border border-light-primary dark:border-dark-primary rounded-lg">
+                    <div>
+                      <label htmlFor={`${selectedProvider}-key`} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {PROVIDERS.find(p => p.id === selectedProvider)?.name} API Key
+                      </label>
+                      <input
+                        type="password"
+                        id={`${selectedProvider}-key`}
+                        placeholder="Enter your API key"
+                        value={currentSettings.keys[selectedProvider]}
+                        onChange={(e) => handleKeyChange(selectedProvider, e.target.value)}
+                        className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
+                      />
+                    </div>
+                    {selectedProvider === 'huggingface' && (
+                      <div>
+                        <label htmlFor="hf-model-id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Model ID
+                        </label>
+                        <input
+                          type="text"
+                          id="hf-model-id"
+                          placeholder="e.g., mistralai/Mistral-7B-Instruct-v0.2"
+                          value={currentSettings.huggingface.modelId}
+                          onChange={(e) => handleModelIdChange(e.target.value)}
+                          className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
+                        />
+                      </div>
+                    )}
+                    {selectedProvider === 'universal' && (
+                      <div className="space-y-4">
+                        <div>
+                          <label htmlFor="universal-base-url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Base URL
+                          </label>
+                          <input
+                            type="text"
+                            id="universal-base-url"
+                            placeholder="e.g., http://localhost:11434/v1"
+                            value={currentSettings.universal.baseUrl}
+                            onChange={(e) => handleUniversalChange('baseUrl', e.target.value)}
+                            className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="universal-model-id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Model ID
+                          </label>
+                          <input
+                            type="text"
+                            id="universal-model-id"
+                            placeholder="e.g., llama3"
+                            value={currentSettings.universal.modelId}
+                            onChange={(e) => handleUniversalChange('modelId', e.target.value)}
+                            className="w-full px-3 py-2 bg-light-bg dark:bg-dark-bg border border-light-primary dark:border-dark-secondary rounded-lg focus:outline-none focus:ring-1 focus:ring-light-accent"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          <div className="mt-4 p-4 border border-light-primary dark:border-dark-primary rounded-lg">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Accent Color
+              Accent Color
             </label>
             <div className="flex items-center space-x-4">
-                <input
-                    type="color"
-                    value={currentSettings.accentColor || '#FF0000'}
-                    onChange={(e) => handleAccentColorChange(e.target.value)}
-                    className="w-10 h-10 rounded cursor-pointer bg-transparent"
-                />
-                <span className="text-sm font-mono">{currentSettings.accentColor || '#FF0000'}</span>
+              <input
+                type="color"
+                value={currentSettings.accentColor || '#FF0000'}
+                onChange={(e) => handleAccentColorChange(e.target.value)}
+                className="w-10 h-10 rounded cursor-pointer bg-transparent"
+              />
+              <span className="text-sm font-mono">{currentSettings.accentColor || '#FF0000'}</span>
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Theme Accent Color</label>
+            <div className="flex gap-2">
+              {['#FF0000', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'].map(color => (
+                <button
+                  key={color}
+                  onClick={() => setCurrentSettings({ ...currentSettings, accentColor: color })}
+                  className={`w-8 h-8 rounded-full border-2 ${currentSettings.accentColor === color ? 'border-white ring-2 ring-gray-400' : 'border-transparent'}`}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
-</div>
 
         <div className="mt-6 pt-4 border-t border-light-primary dark:border-dark-primary flex justify-end space-x-3">
-          <button 
+          <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg bg-light-secondary hover:bg-light-primary dark:bg-dark-secondary dark:hover:bg-dark-primary transition-colors font-semibold"
           >

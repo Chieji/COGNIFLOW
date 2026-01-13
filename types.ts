@@ -1,3 +1,5 @@
+import { ThreadMessageLike as AssistantThreadMessageLike } from '@assistant-ui/react';
+
 export interface Attachment {
   id: string;
   type: 'image' | 'audio' | 'video' | 'file';
@@ -25,6 +27,7 @@ export interface Folder {
   name: string;
   createdAt: string;
   description: string;
+  parentId?: string | null;
 }
 
 export interface Connection {
@@ -41,6 +44,8 @@ export enum View {
   RSS = 'RSS',
   Email = 'EMAIL',
 }
+
+export type ThreadMessageLike = AssistantThreadMessageLike;
 
 export type Theme = 'light' | 'dark';
 
@@ -69,7 +74,6 @@ export interface AiSettings {
     baseUrl: string;
     modelId: string;
   };
-  accentColor?: string;
 }
 
 export interface Citation {
@@ -139,10 +143,7 @@ export interface CreateNoteArgs {
 
 export interface UpdateNoteArgs {
   noteId: string;
-  title?: string;
-  content?: string;
-  tags?: string[];
-  type?: 'text' | 'code' | 'link';
+  content: string; // Content to append
 }
 
 export interface AddTagsArgs {
@@ -154,7 +155,7 @@ export interface ProposeCodePatchArgs {
   title: string;
   description: string;
   codeDiff: string;
-  tests?: string;
+  tests: string;
 }
 
 export interface CreateFolderArgs {
@@ -181,12 +182,13 @@ export interface GetNoteContentArgs {
 
 export interface SetNoteMetadataArgs {
   noteId: string;
-  metadata: Record<string, string | number | boolean>;
+  language?: string;
+  type?: 'text' | 'code' | 'link';
 }
 
 export interface UpdateNoteTitleArgs {
   noteId: string;
-  title: string;
+  newTitle: string;
 }
 
 export interface MoveNoteToFolderArgs {
@@ -199,7 +201,7 @@ export interface ListFoldersArgs {
 }
 
 export interface WriteFileArgs {
-  path: string;
+  noteId: string;
   content: string;
 }
 

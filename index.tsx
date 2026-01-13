@@ -1,9 +1,9 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './styles/globals.css';
 import './styles/assistant-ui.css';
+import { registerSW } from 'virtual:pwa-register';
 
 // Import global styles
 const rootElement = document.getElementById('root');
@@ -17,3 +17,5 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+registerSW({ immediate: true });

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { ThreadMessageLike } from '@assistant-ui/react';
 import { Note, Folder, Connection, AiSettings, PatchProposal, FeatureFlag, AuditLogEntry, View, Theme } from './types';
 import { initialNotes, initialFolders, initialPatches, initialFeatureFlags, initialAuditLog } from './constants';
 import { db } from './db';
@@ -11,7 +12,7 @@ interface AppState {
   folders: Folder[];
   connections: Connection[];
   activeNoteId: string | null;
-  activeFolderI d: string | null;
+  activeFolderId: string | null;
   view: View;
   theme: Theme;
   isSettingsOpen: boolean;
@@ -20,6 +21,9 @@ interface AppState {
   featureFlags: FeatureFlag[];
   auditLog: AuditLogEntry[];
   isInitialized: boolean;
+  chatMessages: ThreadMessageLike[];
+  isChatLoading: boolean;
+  chatError: string | null;
 
   // Actions
   initialize: () => Promise<void>;
@@ -35,6 +39,11 @@ interface AppState {
   setPatches: (patches: PatchProposal[]) => void;
   setFeatureFlags: (flags: FeatureFlag[]) => void;
   setAuditLog: (log: AuditLogEntry[]) => void;
+  addChatMessage: (message: ThreadMessageLike) => void;
+  clearChatMessages: () => void;
+  setChatLoading: (loading: boolean) => void;
+  setChatError: (error: string | null) => void;
+  retryLastMessage: () => void;
 
   // Derived Actions with optimistic updates
   createNewNote: () => Promise<void>;
@@ -68,6 +77,9 @@ export const useStore = create<AppState>()(
       featureFlags: [],
       auditLog: [],
       isInitialized: false,
+      chatMessages: [],
+      isChatLoading: false,
+      chatError: null,
 
       // FIXED: Use initialization lock to prevent race conditions
       initialize: async () => {
@@ -127,6 +139,43 @@ export const useStore = create<AppState>()(
       setPatches: (patches) => set({ patches }),
       setFeatureFlags: (featureFlags) => set({ featureFlags }),
       setAuditLog: (auditLog) => set({ auditLog }),
+
+      // Chat actions from chatSlice
+      addChatMessage: (message: ThreadMessageLike) => {
+        set((state) => ({
+          chatMessages: [...state.chatMessages, message],
+          chatError: null, // Clear any previous errors
+        }));
+        // Auto-save is handled by persist middleware
+      },
+      clearChatMessages: () => {
+        set({ chatMessages: [], chatError: null, isChatLoading: false });
+        // Persist middleware will save the empty array
+      },
+      setChatLoading: (loading: boolean) => {
+        set({ isChatLoading: loading });
+      },
+      setChatError: (error: string | null) => {
+        set({ chatError: error });
+      },
+      retryLastMessage: () => {
+        const { chatMessages } = get();
+        if (chatMessages.length === 0) return;
+
+        const lastUserMessageIndex = chatMessages
+          .map((msg, index) => ({ msg, index }))
+          .filter(({ msg }) => msg.role === 'user')
+          .pop()?.index;
+
+        if (lastUserMessageIndex !== undefined) {
+          const messagesToKeep = chatMessages.slice(0, lastUserMessageIndex + 1);
+          set({
+            chatMessages: messagesToKeep,
+            chatError: null,
+            isChatLoading: false
+          });
+        }
+      },
 
       // FIXED: Use optimistic updates with rollback
       createNewNote: async () => {
@@ -279,6 +328,7 @@ export const useStore = create<AppState>()(
         settings: state.settings,
         activeFolderId: state.activeFolderId,
         view: state.view,
+        chatMessages: state.chatMessages,
       }),
     }
   )

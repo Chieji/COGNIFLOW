@@ -11,7 +11,8 @@
     ],
     "skipLibCheck": true,
     "types": [
-      "node"
+      "node",
+      "vite-plugin-pwa/client"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
@@ -27,7 +28,6 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-
     /* NEXUS STRICT TYPE SAFETY */
     "strict": true,
     "noImplicitAny": true,

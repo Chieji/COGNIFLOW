@@ -3,49 +3,49 @@ import { GoogleGenAI, Type, FunctionDeclaration, Modality, GenerateContentRespon
 import { Note, Connection, Citation, AiAction, Folder } from '../types';
 
 interface SummaryAndTags {
-  summary: string;
-  tags: string[];
+    summary: string;
+    tags: string[];
 }
 
 export const summarizeAndTagNote = async (content: string, apiKey: string): Promise<SummaryAndTags | null> => {
-  if (!apiKey) {
-    throw new Error("API key for Gemini is not configured.");
-  }
-  const ai = new GoogleGenAI({ apiKey });
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Analyze the following note content. Provide a concise, one-sentence summary and generate between 3 to 5 relevant tags (as single words or short phrases).
+    if (!apiKey) {
+        throw new Error("API key for Gemini is not configured.");
+    }
+    const ai = new GoogleGenAI({ apiKey });
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: `Analyze the following note content. Provide a concise, one-sentence summary and generate between 3 to 5 relevant tags (as single words or short phrases).
       
       Content: "${content}"`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            summary: {
-              type: Type.STRING,
-              description: "A concise, one-sentence summary of the note."
-            },
-            tags: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-              description: "An array of 3 to 5 relevant tags."
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        summary: {
+                            type: Type.STRING,
+                            description: "A concise, one-sentence summary of the note."
+                        },
+                        tags: {
+                            type: Type.ARRAY,
+                            items: { type: Type.STRING },
+                            description: "An array of 3 to 5 relevant tags."
+                        }
+                    },
+                    required: ["summary", "tags"],
+                }
             }
-          },
-          required: ["summary", "tags"],
-        }
-      }
-    });
-    
-    const jsonString = response.text;
-    const result: SummaryAndTags = JSON.parse(jsonString);
-    return result;
+        });
 
-  } catch (error) {
-    console.error("Error generating summary and tags:", error);
-    throw error;
-  }
+        const jsonString = response.text;
+        const result: SummaryAndTags = JSON.parse(jsonString);
+        return result;
+
+    } catch (error) {
+        console.error("Error generating summary and tags:", error);
+        throw error;
+    }
 };
 
 interface FoundConnections {
@@ -57,69 +57,69 @@ interface FoundConnections {
 }
 
 export const findConnections = async (notes: Note[], apiKey: string): Promise<Connection[]> => {
-  if (!apiKey) {
-    throw new Error("API key for Gemini is not configured.");
-  }
-  if (notes.length < 2) return [];
+    if (!apiKey) {
+        throw new Error("API key for Gemini is not configured.");
+    }
+    if (notes.length < 2) return [];
 
-  const notesForPrompt = notes.map(note => ({ id: note.id, title: note.title, summary: note.summary || note.content.substring(0, 100) }));
-  const ai = new GoogleGenAI({ apiKey });
+    const notesForPrompt = notes.map(note => ({ id: note.id, title: note.title, summary: note.summary || note.content.substring(0, 100) }));
+    const ai = new GoogleGenAI({ apiKey });
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Given the following list of notes, identify meaningful connections between them based on shared concepts, themes, or direct relationships. Only identify a connection if it's strong and relevant.
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: `Given the following list of notes, identify meaningful connections between them based on shared concepts, themes, or direct relationships. Only identify a connection if it's strong and relevant.
       
       Notes: ${JSON.stringify(notesForPrompt)}
       
       For each connection you find, specify the IDs of the two connected notes.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            connections: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                    reason: {
-                        type: Type.STRING,
-                        description: "A brief explanation of why the two notes are connected."
-                    },
-                    note1_id: {
-                        type: Type.STRING,
-                        description: "The ID of the first note in the connection."
-                    },
-                    note2_id: {
-                        type: Type.STRING,
-                        description: "The ID of the second note in the connection."
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        connections: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    reason: {
+                                        type: Type.STRING,
+                                        description: "A brief explanation of why the two notes are connected."
+                                    },
+                                    note1_id: {
+                                        type: Type.STRING,
+                                        description: "The ID of the first note in the connection."
+                                    },
+                                    note2_id: {
+                                        type: Type.STRING,
+                                        description: "The ID of the second note in the connection."
+                                    }
+                                },
+                                required: ["reason", "note1_id", "note2_id"],
+                            }
+                        }
                     }
-                },
-                required: ["reason", "note1_id", "note2_id"],
-              }
+                }
             }
-          }
+        });
+
+        const jsonString = response.text;
+        const result: FoundConnections = JSON.parse(jsonString);
+
+        const validNoteIds = new Set(notes.map(n => n.id));
+
+        if (result.connections) {
+            return result.connections
+                .filter(c => validNoteIds.has(c.note1_id) && validNoteIds.has(c.note2_id))
+                .map(c => ({ source: c.note1_id, target: c.note2_id }));
         }
-      }
-    });
+        return [];
 
-    const jsonString = response.text;
-    const result: FoundConnections = JSON.parse(jsonString);
-
-    const validNoteIds = new Set(notes.map(n => n.id));
-
-    if (result.connections) {
-      return result.connections
-        .filter(c => validNoteIds.has(c.note1_id) && validNoteIds.has(c.note2_id))
-        .map(c => ({ source: c.note1_id, target: c.note2_id }));
+    } catch (error) {
+        console.error("Error finding connections:", error);
+        throw error;
     }
-    return [];
-
-  } catch (error) {
-    console.error("Error finding connections:", error);
-    throw error;
-  }
 };
 
 export const analyzeVisualMedia = async (
@@ -395,21 +395,21 @@ export const processChatTurn = async (
         throw new Error("API key for Gemini is not configured.");
     }
     const ai = new GoogleGenAI({ apiKey });
-    
+
     const noteOptionsForPrompt = contextNotes.map(n => ({ id: n.id, title: n.title }));
     const folderOptionsForPrompt = contextFolders.map(f => ({ id: f.id, name: f.name }));
-    
-    const notesContext = contextNotes.length > 0
-      ? `Here is a list of available notes the user has. Use their IDs when a tool requires a note_id:\n${JSON.stringify(noteOptionsForPrompt)}\n\n`
-      : "";
-    
-    const foldersContext = contextFolders.length > 0
-      ? `Here is a list of available folders the user has. Use their IDs when a tool requires a folder_id:\n${JSON.stringify(folderOptionsForPrompt)}\n\n`
-      : "";
 
-    const currentNoteContext = currentNote 
-      ? `CURRENT NOTE CONTEXT: You are currently helping with the note "${currentNote.title}" (ID: ${currentNote.id}). The note contains:\n\n${currentNote.content}\n\nWhen the user asks you to modify, organize, or work with "this note" or "the current note", refer to this note.\n\n`
-      : "";
+    const notesContext = contextNotes.length > 0
+        ? `Here is a list of available notes the user has. Use their IDs when a tool requires a note_id:\n${JSON.stringify(noteOptionsForPrompt)}\n\n`
+        : "";
+
+    const foldersContext = contextFolders.length > 0
+        ? `Here is a list of available folders the user has. Use their IDs when a tool requires a folder_id:\n${JSON.stringify(folderOptionsForPrompt)}\n\n`
+        : "";
+
+    const currentNoteContext = currentNote
+        ? `CURRENT NOTE CONTEXT: You are currently helping with the note "${currentNote.title}" (ID: ${currentNote.id}). The note contains:\n\n${currentNote.content}\n\nWhen the user asks you to modify, organize, or work with "this note" or "the current note", refer to this note.\n\n`
+        : "";
 
     const systemInstruction = `You are CogniFlow's Architect, a helpful AI assistant within a personal knowledge management app. Your mission is to be helpful, proactive, and capable of modifying the app's own functionality through code patches. You have access to a list of the user's notes and folders.
 
@@ -454,7 +454,7 @@ When asked to read notes, create or manage notes and folders, or propose code ch
         if (thinkingBudget !== null) {
             config.thinkingConfig = { thinkingBudget };
         }
-        
+
         if (useWebSearch) {
             const stream = await ai.models.generateContentStream({
                 model: model,
@@ -476,7 +476,7 @@ When asked to read notes, create or manage notes and folders, or propose code ch
             }
             return { citations };
         }
-        
+
         // --- Tool usage flow ---
         let response: GenerateContentResponse = await ai.models.generateContent({
             model: model,
@@ -490,14 +490,14 @@ When asked to read notes, create or manage notes and folders, or propose code ch
         if (!useWebSearch && functionCalls && functionCalls.length > 0) {
             const toolResponseParts = [];
             for (const call of functionCalls) {
-                 const result = onExecuteAction({ tool: call.name as any, args: call.args });
-                 toolResponseParts.push({
+                const result = onExecuteAction({ tool: call.name as any, args: call.args });
+                toolResponseParts.push({
                     toolResponse: {
                         id: call.id,
                         name: call.name,
                         response: { name: call.name, content: result },
                     },
-                 });
+                });
             }
 
             const historyWithToolResponses = [
@@ -505,7 +505,7 @@ When asked to read notes, create or manage notes and folders, or propose code ch
                 { role: 'model' as const, parts: functionCalls.map(fc => ({ functionCall: fc })) },
                 { role: 'user' as const, parts: toolResponseParts },
             ];
-            
+
             // Second call is streamed to the user
             const stream = await ai.models.generateContentStream({
                 model: model,
@@ -517,17 +517,65 @@ When asked to read notes, create or manage notes and folders, or propose code ch
                 onChunk(chunk.text);
             }
         } else {
-             // No tool calls, AI responded directly. Send the text in one chunk.
-             onChunk(response.text);
+            // No tool calls, AI responded directly. Send the text in one chunk.
+            onChunk(response.text);
         }
 
         return { citations: [] };
-        
+
     } catch (e) {
         console.error("Error processing chat turn:", e);
         if (e instanceof Error) {
             throw e;
         }
         throw new Error("An unknown error occurred during chat processing.");
+    }
+};
+
+export const getSmartRecommendations = async (currentNote: Note, allNotes: Note[], apiKey: string): Promise<{ relatedNoteIds: string[], suggestedTags: string[], nextSteps: string[] }> => {
+    if (!apiKey) throw new Error("Gemini API key is not configured.");
+
+    const notesContext = allNotes
+        .filter(n => n.id !== currentNote.id)
+        .map(n => ({ id: n.id, title: n.title, tags: n.tags }));
+
+    const ai = new GoogleGenAI({ apiKey });
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: `Analyze the current note and available notes to provide smart recommendations.
+      
+      Current Note:
+      Title: ${currentNote.title}
+      Content: ${currentNote.content}
+      Tags: ${currentNote.tags.join(', ')}
+      
+      Available Notes (ID, Title, Tags):
+      ${JSON.stringify(notesContext)}
+      
+      Provide:
+      1. relatedNoteIds: IDs of up to 3 most relevant existing notes.
+      2. suggestedTags: 3-5 new tags that fit this note.
+      3. nextSteps: 2-3 actionable next steps or questions to expand this note.`,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        relatedNoteIds: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        suggestedTags: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        nextSteps: { type: Type.ARRAY, items: { type: Type.STRING } }
+                    },
+                    required: ["relatedNoteIds", "suggestedTags", "nextSteps"]
+                }
+            }
+        });
+
+        const text = response.text || '{}';
+        return JSON.parse(text);
+    } catch (error) {
+        console.error("Error getting recommendations:", error);
+        return { relatedNoteIds: [], suggestedTags: [], nextSteps: [] };
     }
 };

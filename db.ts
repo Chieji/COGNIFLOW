@@ -1,5 +1,6 @@
 import Dexie, { Table } from 'dexie';
 import { Note, Folder, Connection, PatchProposal, FeatureFlag, AuditLogEntry } from './types';
+import { NoteVersion } from './types/history';
 
 export class CogniflowDatabase extends Dexie {
   notes!: Table<Note>;
@@ -8,16 +9,18 @@ export class CogniflowDatabase extends Dexie {
   patches!: Table<PatchProposal>;
   featureFlags!: Table<FeatureFlag>;
   auditLog!: Table<AuditLogEntry>;
+  versions!: Table<NoteVersion>;
 
   constructor() {
     super('CogniflowDatabase');
-    this.version(1).stores({
+    this.version(2).stores({
       notes: 'id, title, folderId, createdAt, updatedAt, *tags, [folderId+updatedAt], [folderId+createdAt]',
       folders: 'id, name, createdAt, parentId',
       connections: '++id, source, target, [source+target]',
       patches: 'id, status, createdAt, [status+createdAt]',
       featureFlags: 'id, isEnabled',
-      auditLog: 'id, patchId, timestamp, [patchId+timestamp]'
+      auditLog: 'id, patchId, timestamp, [patchId+timestamp]',
+      versions: '++id, noteId, timestamp, [noteId+timestamp]'
     });
   }
 }
