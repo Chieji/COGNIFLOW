@@ -20,17 +20,19 @@ export const createChatSlice: StateCreator<ChatSlice> = (set, get) => ({
   error: null,
 
   addChatMessage: (message: ThreadMessageLike) => {
+    if (!message?.id || !message?.content) {
+      console.error('[ChatSlice] Invalid message structure');
+      return;
+    }
     set((state) => ({
       chatMessages: [...state.chatMessages, message],
-      error: null, // Clear any previous errors
+      error: null,
     }));
-    // Auto-save after adding message
     get().saveChatMessages();
   },
 
   clearChatMessages: () => {
     set({ chatMessages: [], error: null, isLoading: false });
-    localStorage.removeItem('cogniflow-chat-messages');
   },
 
   loadChatMessages: () => {

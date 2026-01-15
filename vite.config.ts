@@ -1,14 +1,20 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
+  // const env = loadEnv(mode, '.', '');
   return {
     server: {
       port: 1477,
       host: '0.0.0.0',
+      hmr: {
+        overlay: false,
+      },
+      watch: {
+        ignored: ['**/node_modules/**', '**/dist/**'],
+      },
       headers: {
         // Content Security Policy (strict)
         'Content-Security-Policy': [
@@ -109,7 +115,7 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, './src'),
       }
     }
   };

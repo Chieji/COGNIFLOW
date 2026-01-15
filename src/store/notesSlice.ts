@@ -15,16 +15,28 @@ export const createNotesSlice: StateCreator<NotesSlice> = (set) => ({
   notes: [],
   selectedNote: null,
   addNote: async (note: Note) => {
+    if (!note?.id) {
+      console.error('[NotesSlice] Cannot add note without valid ID');
+      return;
+    }
     await db.notes.add(note);
     set((state) => ({ notes: [...state.notes, note] }));
   },
   updateNote: async (id: string, updates: Partial<Note>) => {
+    if (!id) {
+      console.error('[NotesSlice] Cannot update note without valid ID');
+      return;
+    }
     await db.notes.update(id, updates);
     set((state) => ({
       notes: state.notes.map((n) => (n.id === id ? { ...n, ...updates } : n)),
     }));
   },
   deleteNote: async (id: string) => {
+    if (!id) {
+      console.error('[NotesSlice] Cannot delete note without valid ID');
+      return;
+    }
     await db.notes.delete(id);
     set((state) => ({ notes: state.notes.filter((n) => n.id !== id) }));
   },

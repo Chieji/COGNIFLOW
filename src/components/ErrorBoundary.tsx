@@ -1,4 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
+import { errorTracking } from '../services/errorTrackingService';
 
 interface Props {
   children: ReactNode;
@@ -21,8 +22,6 @@ interface State {
  *   <YourComponent />
  * </ErrorBoundary>
  */
-import { errorTracking } from '../services/errorTrackingService';
-
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -37,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('[ErrorBoundary] Caught error:', error, errorInfo);
 
     this.setState({
@@ -53,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   logErrorToService(error: Error, errorInfo: ErrorInfo): void {
-    errorTracking.logError(error, errorInfo.componentStack);
+    errorTracking.logError(error, errorInfo.componentStack ?? undefined);
   }
 
   handleReset = (): void => {
@@ -64,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
     });
   };
 
-  render(): ReactNode {
+  override render(): ReactNode {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;

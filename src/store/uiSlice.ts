@@ -11,7 +11,7 @@ export interface UISlice {
 }
 
 export const createUISlice: StateCreator<UISlice> = (set) => ({
-  activeView: 'notes',
+  activeView: View.Notes,
   sidebarWidth: 280,
   showSettings: false,
   setActiveView: (view: View) => set({ activeView: view }),

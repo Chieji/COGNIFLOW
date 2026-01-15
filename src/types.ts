@@ -231,5 +231,11 @@ export interface CreateNoteFromConversationArgs {
 // Represents an action the app should take based on AI output
 export interface AiAction {
   tool: AiTool;
-  args: AiToolArgs;  // FIXED: Now properly typed instead of 'any'
+  args: Record<string, unknown>;  // Allow flexible property names from function declarations
 }
+
+// Type guard helper for accessing action args
+export function getToolArgs<T>(args: Record<string, unknown>): T {
+  return args as unknown as T;
+}
+
