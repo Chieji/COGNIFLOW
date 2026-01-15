@@ -48,7 +48,7 @@ class SVGErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
     this.state = { hasError: false, error: null };
   }
   static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
-  render() {
+  override render() {
     if (this.state.hasError) return <div className="text-red-500 text-center p-4">Graph rendering error: {this.state.error?.message}</div>;
     return this.props.children;
   }
@@ -110,14 +110,14 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ notes, connections, set
     const defs = svg.append('defs');
     const filter = defs.append('filter').attr('id', 'glow').attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
     filter.append('feGaussianBlur').attr('stdDeviation', 4).attr('result', 'coloredBlur');
-    filter.append('feMerge').selectAll('feMergeNode').data([0, 1]).enter().append('feMergeNode').attr('in', d => d === 0 ? 'coloredBlur' : 'SourceGraphic');
+    filter.append('feMerge').selectAll('feMergeNode').data([0, 1]).enter().append('feMergeNode').attr('in', (d: any) => d === 0 ? 'coloredBlur' : 'SourceGraphic');
 
     const gradient = defs.append('linearGradient').attr('id', 'nodeGradient').attr('x1', '0%').attr('y1', '0%').attr('x2', '100%').attr('y2', '100%');
     gradient.append('stop').attr('offset', '0%').attr('stop-color', '#00d9ff');
     gradient.append('stop').attr('offset', '100%').attr('stop-color', '#0066ff');
 
     const simulation = d3.forceSimulation<GraphNode>(graphData.nodes)
-      .force('link', d3.forceLink<GraphNode, GraphLink>(graphData.links).id(d => d.id).distance(100))
+      .force('link', d3.forceLink<GraphNode, GraphLink>(graphData.links).id((d: any) => d.id).distance(100))
       .force('charge', d3.forceManyBody().strength(-300))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(40))
@@ -129,16 +129,16 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ notes, connections, set
 
     const drag = (sim: d3.Simulation<GraphNode, undefined>) => {
       return d3.drag<SVGGElement, GraphNode>()
-        .on('start', (event) => {
+        .on('start', (event: any) => {
           if (!event.active) sim.alphaTarget(0.3).restart();
           event.subject.fx = event.subject.x;
           event.subject.fy = event.subject.y;
         })
-        .on('drag', (event) => {
+        .on('drag', (event: any) => {
           event.subject.fx = event.x;
           event.subject.fy = event.y;
         })
-        .on('end', (event) => {
+        .on('end', (event: any) => {
           if (!event.active) sim.alphaTarget(0);
           event.subject.fx = null;
           event.subject.fy = null;
@@ -150,7 +150,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ notes, connections, set
       .data(graphData.links)
       .enter().append('line')
       .attr('stroke', 'rgba(0, 217, 255, 0.2)')
-      .attr('stroke-width', d => Math.max(1, (d.strength || 0.5) * 3))
+      .attr('stroke-width', (d: any) => Math.max(1, (d.strength || 0.5) * 3))
       .style('filter', 'url(#glow)');
 
     const node = svg.append('g')
@@ -159,17 +159,17 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ notes, connections, set
       .enter().append('g')
       .attr('class', 'cursor-pointer')
       .call(drag(simulation) as any)
-      .on('click', (_, d) => {
+      .on('click', (_: any, d: any) => {
         setActiveNoteId(d.id);
         setView(View.Notes);
       })
-      .on('mouseover', function () {
+      .on('mouseover', function (this: any) {
         d3.select(this).select('circle')
           .transition().duration(200)
           .attr('r', 28)
           .attr('stroke-width', 2);
       })
-      .on('mouseout', function () {
+      .on('mouseout', function (this: any) {
         d3.select(this).select('circle')
           .transition().duration(200)
           .attr('r', 20)
@@ -184,7 +184,7 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ notes, connections, set
       .style('filter', 'url(#glow)');
 
     node.append('text')
-      .text(d => d.title)
+      .text((d: any) => d.title)
       .attr('text-anchor', 'middle')
       .attr('dy', '.3em')
       .attr('font-size', '12px')
@@ -197,11 +197,11 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ notes, connections, set
       if (iterationCountRef.current >= DEFAULT_SIMULATION_CONFIG.maxIterations) simulation.stop();
 
       link
-        .attr('x1', d => (d.source as any).x)
-        .attr('y1', d => (d.source as any).y)
-        .attr('x2', d => (d.target as any).x)
-        .attr('y2', d => (d.target as any).y);
-      node.attr('transform', d => `translate(${d.x},${d.y})`);
+.attr('x1', (d: any) => d.source.x)
+.attr('y1', (d: any) => d.source.y)
+.attr('x2', (d: any) => d.target.x)
+.attr('y2', (d: any) => d.target.y);
+      node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     });
 
     return () => {

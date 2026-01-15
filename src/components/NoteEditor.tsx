@@ -15,7 +15,7 @@ import { db } from '../db';
 interface NoteEditorProps {
     note: Note;
     settings: AiSettings;
-    updateNote: (note: Note) => void;
+    updateNote: (id: string, updates: Partial<Note>) => void;
     onAskAI?: (note: Note) => void;
 }
 
@@ -51,7 +51,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
     useEffect(() => {
         const handler = setTimeout(() => {
             if (note.title !== title || note.content !== content) {
-                updateNote({ ...note, title, content });
+                updateNote(note.id, { title, content });
             }
         }, 500); // Debounce saves
 
@@ -105,12 +105,17 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
     };
 
     const addAttachment = (attachment: Omit<Attachment, 'id'>) => {
+        if (!attachment?.url || !attachment?.name) {
+          console.error('[NoteEditor] Invalid attachment data');
+          return;
+        }
         const newAttachment: Attachment = { ...attachment, id: `att-${Date.now()}` };
-        updateNote({ ...note, attachments: [...note.attachments, newAttachment] });
+        updateNote(note.id, { attachments: [...(note.attachments ?? []), newAttachment] });
     };
 
     const removeAttachment = (id: string) => {
-        updateNote({ ...note, attachments: note.attachments.filter(att => att.id !== id) });
+        if (!id) return;
+        updateNote(note.id, { attachments: (note.attachments ?? []).filter(att => att.id !== id) });
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,26 +139,28 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
                 ...att,
                 id: `att-${Date.now()}-${index}`
             }));
-            updateNote({ ...note, attachments: [...note.attachments, ...finalAttachments] });
+            updateNote(note.id, { attachments: [...(note.attachments ?? []), ...finalAttachments] });
         };
 
         // FIX: Replaced for...of loop with a standard for loop. This resolves a TypeScript
         // type inference issue where `file` was being inferred as `unknown`, ensuring
         // that properties like `type` and `name` are correctly recognized.
         for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+            const currentFile = files[i];
+            if (!currentFile) continue;
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 if (e.target?.result) {
                     let type: Attachment['type'] = 'file';
-                    if (file.type.startsWith('image/')) type = 'image';
-                    if (file.type.startsWith('audio/')) type = 'audio';
-                    if (file.type.startsWith('video/')) type = 'video';
+                    if (currentFile.type.startsWith('image/')) type = 'image';
+                    if (currentFile.type.startsWith('audio/')) type = 'audio';
+                    if (currentFile.type.startsWith('video/')) type = 'video';
                     newAttachments.push({
                         type: type,
                         url: e.target.result as string,
-                        name: file.name,
-                        mimeType: file.type,
+                        name: currentFile.name,
+                        mimeType: currentFile.type,
                     });
                 }
                 processedFiles++;
@@ -161,7 +168,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
                     onAllFilesProcessed();
                 }
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(currentFile);
         }
     };
 
@@ -173,10 +180,10 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
             if (!apiKey) {
                 throw new Error("API key for Gemini is not configured. Please set it in Settings.");
             }
-            const result = await summarizeAndTagNote(note.content, apiKey);
-            if (result) {
-                updateNote({ ...note, summary: result.summary, tags: result.tags });
-            }
+const result = await summarizeAndTagNote(note.content, apiKey);
+if (result) {
+    updateNote(note.id, { summary: result.summary, tags: result.tags });
+}
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
             setInsightsError(errorMessage);
@@ -194,13 +201,16 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
 
             let analysisResult = '';
             if (attachment.type === 'image') {
-                const base64Data = attachment.url.split(',')[1];
-                analysisResult = await analyzeVisualMedia(
-                    "Describe this image in detail.",
-                    [{ mimeType: attachment.mimeType, data: base64Data }],
-                    apiKey,
-                    'gemini-2.5-flash'
-                );
+const base64Data = attachment.url.split(',')[1];
+if (!base64Data) {
+  throw new Error('Invalid image data URL');
+}
+analysisResult = await analyzeVisualMedia(
+    "Describe this image in detail.",
+    [{ mimeType: attachment.mimeType, data: base64Data }],
+    apiKey,
+    'gemini-2.5-flash'
+);
             } else if (attachment.type === 'video') {
                 const videoBlob = await fetch(attachment.url).then(r => r.blob());
                 const frames = await extractFramesFromVideo(videoBlob, 5);
@@ -292,9 +302,9 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
                 video.currentTime = 0.01; // Start capturing from the beginning
             };
 
-            video.onerror = (e) => {
-                reject(new Error('Failed to load video for frame extraction.'));
-            };
+video.onerror = () => {
+    reject(new Error('Failed to load video for frame extraction.'));
+};
         });
     };
 
@@ -523,7 +533,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
                 {showImageAnalyzer && (
                     <div className="mb-4">
                         <ImageAnalyzer
-                            apiKey={settings.keys.gemini || ''}
+apiKey={settings.keys.gemini}
                             onAnalysisComplete={handleImageAnalysisComplete}
                         />
                     </div>
@@ -583,7 +593,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                     <VersionHistory
                         noteId={note.id}
-                        onRestore={(content, title) => updateNote({ ...note, content, title })}
+                        onRestore={(content, title) => updateNote(note.id, { content, title })}
                     />
                     <span>{note.type === 'code' && note.language ? <LanguageBadge language={note.language} /> : `Type: ${note.type}`}</span>
                     <span>Last updated: {new Date(note.updatedAt).toLocaleTimeString()}</span>

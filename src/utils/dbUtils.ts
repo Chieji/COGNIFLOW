@@ -1,4 +1,4 @@
-import { db } from './db';
+import { db } from '../db';
 
 /**
  * Transaction wrapper with retry logic and race condition prevention

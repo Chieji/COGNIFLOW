@@ -39,8 +39,10 @@ interface AppState {
   setPatches: (patches: PatchProposal[]) => void;
   setFeatureFlags: (flags: FeatureFlag[]) => void;
   setAuditLog: (log: AuditLogEntry[]) => void;
-  addChatMessage: (message: ThreadMessageLike) => void;
-  clearChatMessages: () => void;
+  addChatMessage: (message: ThreadMessageLike) => Promise<void>;
+  clearChatMessages: () => Promise<void>;
+  loadChatMessages: () => Promise<void>;
+  saveChatMessages: () => Promise<void>;
   setChatLoading: (loading: boolean) => void;
   setChatError: (error: string | null) => void;
   retryLastMessage: () => void;
@@ -83,48 +85,54 @@ export const useStore = create<AppState>()(
 
       // FIXED: Use initialization lock to prevent race conditions
       initialize: async () => {
-        await ensureInitialized(async () => {
-          console.log('[Store] Initializing with race condition prevention...');
+        try {
+          await ensureInitialized(async () => {
+            console.log('[Store] Initializing with race condition prevention...');
 
-          const notes = await db.notes.toArray();
-          const folders = await db.folders.toArray();
-          const connections = await db.connections.toArray();
-          const patches = await db.patches.toArray();
-          const featureFlags = await db.featureFlags.toArray();
-          const auditLog = await db.auditLog.toArray();
+            const notes = await db.notes.toArray();
+            const folders = await db.folders.toArray();
+            const connections = await db.connections.toArray();
+            const patches = await db.patches.toArray();
+            const featureFlags = await db.featureFlags.toArray();
+            const auditLog = await db.auditLog.toArray();
 
-          // If DB is empty, seed with initial data
-          if (notes.length === 0 && folders.length === 0) {
-            await db.notes.bulkAdd(initialNotes);
-            await db.folders.bulkAdd(initialFolders);
-            await db.patches.bulkAdd(initialPatches);
-            await db.featureFlags.bulkAdd(initialFeatureFlags);
-            await db.auditLog.bulkAdd(initialAuditLog);
+            // If DB is empty, seed with initial data
+            if (notes.length === 0 && folders.length === 0) {
+              await db.notes.bulkAdd(initialNotes);
+              await db.folders.bulkAdd(initialFolders);
+              await db.patches.bulkAdd(initialPatches);
+              await db.featureFlags.bulkAdd(initialFeatureFlags);
+              await db.auditLog.bulkAdd(initialAuditLog);
 
-            set({
-              notes: initialNotes,
-              folders: initialFolders,
-              patches: initialPatches,
-              featureFlags: initialFeatureFlags,
-              auditLog: initialAuditLog,
-              activeNoteId: initialNotes.length > 0 ? initialNotes[0].id : null,
-            });
-          } else {
-            set({
-              notes,
-              folders,
-              connections,
-              patches,
-              featureFlags,
-              auditLog,
-              activeNoteId: notes.length > 0 ? notes[0].id : null,
-            });
-          }
+              set({
+                notes: initialNotes,
+                folders: initialFolders,
+                patches: initialPatches,
+                featureFlags: initialFeatureFlags,
+                auditLog: initialAuditLog,
+                activeNoteId: initialNotes.length > 0 ? initialNotes[0].id : null,
+              });
+            } else {
+              set({
+                notes,
+                folders,
+                connections,
+                patches,
+                featureFlags,
+                auditLog,
+                activeNoteId: notes.length > 0 ? notes[0].id : null,
+              });
+            }
 
-          console.log('[Store] Initialization complete');
-        });
+            console.log('[Store] Initialization complete');
+          });
 
-        set({ isInitialized: true });
+          set({ isInitialized: true });
+        } catch (error) {
+          console.error('[Store] Initialization failed:', error);
+          set({ isInitialized: false });
+          throw error;
+        }
       },
 
       setNotes: (notes) => set({ notes }),
@@ -141,22 +149,41 @@ export const useStore = create<AppState>()(
       setAuditLog: (auditLog) => set({ auditLog }),
 
       // Chat actions from chatSlice
-      addChatMessage: (message: ThreadMessageLike) => {
+      addChatMessage: async (message: ThreadMessageLike) => {
         set((state) => ({
           chatMessages: [...state.chatMessages, message],
           chatError: null, // Clear any previous errors
         }));
-        // Auto-save is handled by persist middleware
+        // Save to IndexedDB
+        await db.chatMessages.add(message);
       },
-      clearChatMessages: () => {
+      clearChatMessages: async () => {
         set({ chatMessages: [], chatError: null, isChatLoading: false });
-        // Persist middleware will save the empty array
+        // Clear from IndexedDB
+        await db.chatMessages.clear();
       },
       setChatLoading: (loading: boolean) => {
         set({ isChatLoading: loading });
       },
       setChatError: (error: string | null) => {
         set({ chatError: error });
+      },
+      loadChatMessages: async () => {
+        try {
+          const messages = await db.chatMessages.toArray();
+          set({ chatMessages: messages });
+        } catch (error) {
+          console.error('[Store] Failed to load chat messages from IndexedDB:', error);
+        }
+      },
+      saveChatMessages: async () => {
+        try {
+          const { chatMessages } = get();
+          await db.chatMessages.clear();
+          await db.chatMessages.bulkAdd(chatMessages);
+        } catch (error) {
+          console.error('[Store] Failed to save chat messages to IndexedDB:', error);
+        }
       },
       retryLastMessage: () => {
         const { chatMessages } = get();
@@ -174,6 +201,7 @@ export const useStore = create<AppState>()(
             chatError: null,
             isChatLoading: false
           });
+          get().saveChatMessages();
         }
       },
 
@@ -328,7 +356,7 @@ export const useStore = create<AppState>()(
         settings: state.settings,
         activeFolderId: state.activeFolderId,
         view: state.view,
-        chatMessages: state.chatMessages,
+        // chatMessages are now persisted to IndexedDB, not localStorage
       }),
     }
   )

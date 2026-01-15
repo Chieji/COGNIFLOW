@@ -1,40 +1,8 @@
 /* COGNIFLOW Global Styles - Red & Black Premium Theme */
 
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-
-:root {
-  /* Dark Mode - Red & Black Palette */
-  --color-dark-bg: #000000;
-  --color-dark-surface: #0A0A0A;
-  --color-dark-primary: #121212;
-  --color-dark-secondary: #1A1A1A;
-  --color-dark-accent: var(--user-accent-color, #FF0000);
-  --color-dark-accent-hover: #CC0000;
-  --color-dark-text: #FFFFFF;
-  --color-dark-text-secondary: #A0A0A0;
-
-  /* Light Mode - White & Red Palette */
-  --color-light-bg: #FFFFFF;
-  --color-light-surface: #F5F5F5;
-  --color-light-primary: #E5E5E5;
-  --color-light-secondary: #D4D4D4;
-  --color-light-accent: var(--user-accent-color, #FF0000);
-  --color-light-accent-hover: #CC0000;
-  --color-light-text: #000000;
-  --color-light-text-secondary: #404040;
-
-  /* Glassmorphism */
-  --glass-blur: blur(12px);
-  --glass-opacity: 0.1;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 20px rgba(255, 0, 0, 0.2);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Base Styles */
 * {
@@ -60,20 +28,17 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-dark-accent);
-  border-radius: 3px;
+  @apply bg-dark-accent rounded-sm;
 }
 
 /* Button Styles */
 .btn-primary {
-  @apply px-4 py-2 rounded-md font-semibold transition-all;
-  background-color: var(--color-dark-accent);
-  color: white;
+  @apply px-4 py-2 rounded-md font-semibold transition-all bg-dark-accent text-white;
 }
 
 .btn-primary:hover {
   filter: brightness(1.1);
-  box-shadow: 0 0 15px var(--color-dark-accent);
+  @apply shadow-glow;
 }
 
 /* Input Styles */

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNotes } from '../../hooks/useNotes';
+import { useStore } from '../../store';
 import { Note } from '../../types';
 
 interface NoteListSectionProps {
@@ -11,7 +11,7 @@ export const NoteListSection: React.FC<NoteListSectionProps> = ({
   onNoteClick, 
   selectedNoteId 
 }) => {
-  const { notes } = useNotes();
+  const notes = useStore((state) => state.notes);
 
   return (
     <div style={{ padding: '0.5rem' }}>

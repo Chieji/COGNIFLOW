@@ -7,7 +7,7 @@ interface SmartRecommendationsProps {
     note: Note;
     allNotes: Note[];
     apiKey: string;
-    onUpdateNote: (note: Note) => void;
+    onUpdateNote: (id: string, updates: Partial<Note>) => void;
     onNavigateToNote: (noteId: string) => void;
 }
 
@@ -37,11 +37,11 @@ export const SmartRecommendations: React.FC<SmartRecommendationsProps> = ({
         }
     };
 
-    const addTag = (tag: string) => {
-        if (!note.tags.includes(tag)) {
-            onUpdateNote({ ...note, tags: [...note.tags, tag] });
-        }
-    };
+const addTag = (tag: string) => {
+    if (!note.tags.includes(tag)) {
+        onUpdateNote(note.id, { tags: [...note.tags, tag] });
+    }
+};
 
     return (
         <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">

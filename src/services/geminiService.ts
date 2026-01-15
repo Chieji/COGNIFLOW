@@ -1,6 +1,7 @@
 // FIX: Removed FunctionDeclarationSchema from import as it is not an exported member.
 import { GoogleGenAI, Type, FunctionDeclaration, Modality, GenerateContentResponse } from '@google/genai';
 import { Note, Connection, Citation, AiAction, Folder } from '../types';
+import { sanitizeAIPrompt, validateApiKey, validateNoteContent, aiCallLimiter } from '../utils/validation';
 
 interface SummaryAndTags {
     summary: string;
@@ -11,13 +12,30 @@ export const summarizeAndTagNote = async (content: string, apiKey: string): Prom
     if (!apiKey) {
         throw new Error("API key for Gemini is not configured.");
     }
+
+    const apiKeyValidation = validateApiKey(apiKey, 'gemini');
+    if (!apiKeyValidation.valid) {
+        throw new Error(apiKeyValidation.error);
+    }
+
+    const contentValidation = validateNoteContent(content);
+    if (!contentValidation.valid) {
+        throw new Error(contentValidation.error);
+    }
+
+    const sanitizedContent = sanitizeAIPrompt(content);
+
+    if (!aiCallLimiter.isAllowed('summarizeAndTagNote')) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
     const ai = new GoogleGenAI({ apiKey });
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: `Analyze the following note content. Provide a concise, one-sentence summary and generate between 3 to 5 relevant tags (as single words or short phrases).
-      
-      Content: "${content}"`,
+
+      Content: "${sanitizedContent}"`,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -39,6 +57,9 @@ export const summarizeAndTagNote = async (content: string, apiKey: string): Prom
         });
 
         const jsonString = response.text;
+        if (!jsonString) {
+            throw new Error('No response text from AI');
+        }
         const result: SummaryAndTags = JSON.parse(jsonString);
         return result;
 
@@ -60,7 +81,17 @@ export const findConnections = async (notes: Note[], apiKey: string): Promise<Co
     if (!apiKey) {
         throw new Error("API key for Gemini is not configured.");
     }
+
+    const apiKeyValidation = validateApiKey(apiKey, 'gemini');
+    if (!apiKeyValidation.valid) {
+        throw new Error(apiKeyValidation.error);
+    }
+
     if (notes.length < 2) return [];
+
+    if (!aiCallLimiter.isAllowed('findConnections')) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+    }
 
     const notesForPrompt = notes.map(note => ({ id: note.id, title: note.title, summary: note.summary || note.content.substring(0, 100) }));
     const ai = new GoogleGenAI({ apiKey });
@@ -69,9 +100,9 @@ export const findConnections = async (notes: Note[], apiKey: string): Promise<Co
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: `Given the following list of notes, identify meaningful connections between them based on shared concepts, themes, or direct relationships. Only identify a connection if it's strong and relevant.
-      
+
       Notes: ${JSON.stringify(notesForPrompt)}
-      
+
       For each connection you find, specify the IDs of the two connected notes.`,
             config: {
                 responseMimeType: "application/json",
@@ -105,6 +136,9 @@ export const findConnections = async (notes: Note[], apiKey: string): Promise<Co
         });
 
         const jsonString = response.text;
+        if (!jsonString) {
+            throw new Error('No response text from AI');
+        }
         const result: FoundConnections = JSON.parse(jsonString);
 
         const validNoteIds = new Set(notes.map(n => n.id));
@@ -129,10 +163,22 @@ export const analyzeVisualMedia = async (
     model: 'gemini-2.5-flash' | 'gemini-2.5-pro'
 ): Promise<string> => {
     if (!apiKey) throw new Error("API key for Gemini is not configured.");
+
+    const apiKeyValidation = validateApiKey(apiKey, 'gemini');
+    if (!apiKeyValidation.valid) {
+        throw new Error(apiKeyValidation.error);
+    }
+
+    const sanitizedPrompt = sanitizeAIPrompt(prompt);
+
+    if (!aiCallLimiter.isAllowed('analyzeVisualMedia')) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
     const ai = new GoogleGenAI({ apiKey });
 
     const parts = [
-        { text: prompt },
+        { text: sanitizedPrompt },
         ...media.map(m => ({
             inlineData: {
                 mimeType: m.mimeType,
@@ -144,9 +190,13 @@ export const analyzeVisualMedia = async (
     try {
         const response = await ai.models.generateContent({
             model: model,
-            contents: { parts: parts },
+            contents: { parts: parts as any },
         });
-        return response.text;
+        const text = response.text;
+        if (!text) {
+            throw new Error('No response text from AI');
+        }
+        return text;
     } catch (error) {
         console.error("Error analyzing visual media:", error);
         throw error;
@@ -155,11 +205,31 @@ export const analyzeVisualMedia = async (
 
 export const generateSpeech = async (text: string, apiKey: string): Promise<string | null> => {
     if (!apiKey) throw new Error("API key for Gemini is not configured for TTS.");
+
+    const apiKeyValidation = validateApiKey(apiKey, 'gemini');
+    if (!apiKeyValidation.valid) {
+        throw new Error(apiKeyValidation.error);
+    }
+
+    if (!text || text.trim().length === 0) {
+        throw new Error('Text is required for speech generation');
+    }
+
+    if (text.length > 1000) {
+        throw new Error('Text for speech generation cannot exceed 1000 characters');
+    }
+
+    const sanitizedText = sanitizeAIPrompt(text);
+
+    if (!aiCallLimiter.isAllowed('generateSpeech')) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
     const ai = new GoogleGenAI({ apiKey });
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash-preview-tts",
-            contents: [{ parts: [{ text: `Say: ${text}` }] }],
+            contents: [{ parts: [{ text: `Say: ${sanitizedText}` }] }],
             config: {
                 responseModalities: [Modality.AUDIO],
                 speechConfig: {
@@ -394,17 +464,37 @@ export const processChatTurn = async (
     if (!apiKey) {
         throw new Error("API key for Gemini is not configured.");
     }
+
+    const apiKeyValidation = validateApiKey(apiKey, 'gemini');
+    if (!apiKeyValidation.valid) {
+        throw new Error(apiKeyValidation.error);
+    }
+
+    if (!newMessage || newMessage.trim().length === 0) {
+        throw new Error('Message is required');
+    }
+
+    if (newMessage.length > 5000) {
+        throw new Error('Message cannot exceed 5000 characters');
+    }
+
+    const sanitizedMessage = sanitizeAIPrompt(newMessage);
+
+    if (!aiCallLimiter.isAllowed('processChatTurn')) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
     const ai = new GoogleGenAI({ apiKey });
 
     const noteOptionsForPrompt = contextNotes.map(n => ({ id: n.id, title: n.title }));
     const folderOptionsForPrompt = contextFolders.map(f => ({ id: f.id, name: f.name }));
 
     const notesContext = contextNotes.length > 0
-        ? `Here is a list of available notes the user has. Use their IDs when a tool requires a note_id:\n${JSON.stringify(noteOptionsForPrompt)}\n\n`
+        ? `Here is a list of available notes user has. Use their IDs when a tool requires a note_id:\n${JSON.stringify(noteOptionsForPrompt)}\n\n`
         : "";
 
     const foldersContext = contextFolders.length > 0
-        ? `Here is a list of available folders the user has. Use their IDs when a tool requires a folder_id:\n${JSON.stringify(folderOptionsForPrompt)}\n\n`
+        ? `Here is a list of available folders user has. Use their IDs when a tool requires a folder_id:\n${JSON.stringify(folderOptionsForPrompt)}\n\n`
         : "";
 
     const currentNoteContext = currentNote
@@ -413,32 +503,32 @@ export const processChatTurn = async (
 
     const systemInstruction = `You are CogniFlow's Architect, a helpful AI assistant within a personal knowledge management app. Your mission is to be helpful, proactive, and capable of modifying the app's own functionality through code patches. You have access to a list of the user's notes and folders.
 
-${currentNoteContext}
-${notesContext}
-${foldersContext}
+ ${currentNoteContext}
+ ${notesContext}
+ ${foldersContext}
 
-IMPORTANT CAPABILITIES:
-- You can CREATE, READ, UPDATE, and DELETE notes and folders
-- When users describe content that should be saved as a note, proactively offer to create it
-- When users ask you to organize, clean up, or arrange notes, use the available tools
-- When users want to remember something, suggest creating a note
-- You have full permissions to manage the user's knowledge base
+ IMPORTANT CAPABILITIES:
+ - You can CREATE, READ, UPDATE, and DELETE notes and folders
+ - When users describe content that should be saved as a note, proactively offer to create it
+ - When users ask you to organize, clean up, or arrange notes, use the available tools
+ - When users want to remember something, suggest creating a note
+ - You have full permissions to manage the user's knowledge base
 
-NATURAL LANGUAGE NOTE CREATION:
-- If a user describes content that would benefit from being saved (ideas, tasks, reminders, research, etc.), offer to create a note
-- When creating notes from conversation, give them descriptive titles and organize content logically
-- Suggest appropriate tags and folder organization
+ NATURAL LANGUAGE NOTE CREATION:
+ - If a user describes content that would benefit from being saved (ideas, tasks, reminders, research, etc.), offer to create a note
+ - When creating notes from conversation, give them descriptive titles and organize content logically
+ - Suggest appropriate tags and folder organization
 
-NOTE MANAGEMENT:
-- Help users organize their thoughts by creating structured notes
-- Clean up and reorganize existing notes when requested
-- Create connections between related notes
-- Update note content, titles, and metadata as needed
+ NOTE MANAGEMENT:
+ - Help users organize their thoughts by creating structured notes
+ - Clean up and reorganize existing notes when requested
+ - Create connections between related notes
+ - Update note content, titles, and metadata as needed
 
-When asked to read notes, create or manage notes and folders, or propose code changes, you must use the provided tools. Be concise and helpful in your responses to the user. When searching the web, provide citations for your answers.`;
+ When asked to read notes, create or manage notes and folders, or propose code changes, you must use the provided tools. Be concise and helpful in your responses to the user. When searching the web, provide citations for your answers.`;
 
     try {
-        const fullHistory = [...history, { role: 'user' as const, parts: [{ text: newMessage }] }];
+        const fullHistory = [...history, { role: 'user' as const, parts: [{ text: sanitizedMessage }] }];
 
         const modelTools: any[] = [];
         if (useWebSearch) {
@@ -535,6 +625,22 @@ When asked to read notes, create or manage notes and folders, or propose code ch
 export const getSmartRecommendations = async (currentNote: Note, allNotes: Note[], apiKey: string): Promise<{ relatedNoteIds: string[], suggestedTags: string[], nextSteps: string[] }> => {
     if (!apiKey) throw new Error("Gemini API key is not configured.");
 
+    const apiKeyValidation = validateApiKey(apiKey, 'gemini');
+    if (!apiKeyValidation.valid) {
+        throw new Error(apiKeyValidation.error);
+    }
+
+    if (!aiCallLimiter.isAllowed('getSmartRecommendations')) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
+    const contentValidation = validateNoteContent(currentNote.content);
+    if (!contentValidation.valid) {
+        throw new Error(contentValidation.error);
+    }
+
+    const sanitizedContent = sanitizeAIPrompt(currentNote.content);
+
     const notesContext = allNotes
         .filter(n => n.id !== currentNote.id)
         .map(n => ({ id: n.id, title: n.title, tags: n.tags }));
@@ -545,15 +651,15 @@ export const getSmartRecommendations = async (currentNote: Note, allNotes: Note[
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: `Analyze the current note and available notes to provide smart recommendations.
-      
+
       Current Note:
       Title: ${currentNote.title}
-      Content: ${currentNote.content}
+      Content: ${sanitizedContent}
       Tags: ${currentNote.tags.join(', ')}
-      
+
       Available Notes (ID, Title, Tags):
       ${JSON.stringify(notesContext)}
-      
+
       Provide:
       1. relatedNoteIds: IDs of up to 3 most relevant existing notes.
       2. suggestedTags: 3-5 new tags that fit this note.
