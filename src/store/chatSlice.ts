@@ -33,6 +33,7 @@ export const createChatSlice: StateCreator<ChatSlice> = (set, get) => ({
 
   clearChatMessages: () => {
     set({ chatMessages: [], error: null, isLoading: false });
+    get().saveChatMessages();
   },
 
   loadChatMessages: () => {

@@ -9,6 +9,7 @@ import { useThemeEffect } from './hooks/useThemeEffect';
 import { useSharedNoteHandler } from './hooks/useSharedNoteHandler';
 import { handleAiAction } from './services/aiActionHandler';
 import { exportData, importData } from './utils/exportImport';
+import { mcpService } from './services/mcpService';
 
 // Setup global error handlers for unhandled errors
 setupGlobalErrorHandlers();
@@ -27,6 +28,18 @@ const App: React.FC = () => {
 
   useEffect(() => {
     initialize();
+
+    // Initialize MCP service when app starts
+    const initMCP = async () => {
+      try {
+        await mcpService.initialize();
+        console.log('MCP service initialized');
+      } catch (error) {
+        console.error('Failed to initialize MCP service:', error);
+      }
+    };
+
+    initMCP();
   }, [initialize]);
 
   const onExport = (format: 'json' | 'markdown' | 'pdf' = 'json') => {

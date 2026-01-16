@@ -2,6 +2,7 @@
 import { GoogleGenAI, Type, FunctionDeclaration, Modality, GenerateContentResponse } from '@google/genai';
 import { Note, Connection, Citation, AiAction, Folder } from '../types';
 import { sanitizeAIPrompt, validateApiKey, validateNoteContent, aiCallLimiter } from '../utils/validation';
+import { mcpService } from './mcpService';
 
 interface SummaryAndTags {
     summary: string;
@@ -445,6 +446,18 @@ const tools: FunctionDeclaration[] = [
             },
             required: ["title", "content"],
         },
+    },
+    {
+        name: "execute_browseros_action",
+        description: "Execute an action through BrowserOS MCP integration. Use this when user wants to interact with the browser, visit websites, or perform web-based tasks.",
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                action: { type: Type.STRING, description: "The action to perform (e.g., 'visit_url', 'click_element', 'extract_content')" },
+                parameters: { type: Type.OBJECT, description: "Parameters for the action" },
+            },
+            required: ["action", "parameters"],
+        },
     }
 ];
 
@@ -580,7 +593,30 @@ export const processChatTurn = async (
         if (!useWebSearch && functionCalls && functionCalls.length > 0) {
             const toolResponseParts = [];
             for (const call of functionCalls) {
-                const result = onExecuteAction({ tool: call.name as any, args: call.args });
+                let result;
+
+                // Handle MCP-specific tool calls
+                if (call.name === 'execute_browseros_action') {
+                    try {
+                        // Initialize MCP service if not already connected
+                        if (!mcpService.isConnectedToMCP()) {
+                            await mcpService.initialize();
+                        }
+
+                        if (mcpService.isConnectedToMCP()) {
+                            result = await mcpService.callTool(call.name, call.args);
+                        } else {
+                            result = "Error: Could not connect to BrowserOS MCP server";
+                        }
+                    } catch (error) {
+                        console.error("Error calling MCP tool:", error);
+                        result = `Error executing BrowserOS action: ${(error as Error).message}`;
+                    }
+                } else {
+                    // Handle regular COGNIFLOW tools
+                    result = onExecuteAction({ tool: call.name as any, args: call.args });
+                }
+
                 toolResponseParts.push({
                     toolResponse: {
                         id: call.id,

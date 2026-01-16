@@ -9,6 +9,18 @@
   @apply transition-colors duration-200;
 }
 
+.glass {
+  @apply bg-opacity-80 backdrop-filter backdrop-blur-lg;
+}
+
+.glass-panel {
+  @apply bg-dark-surface/70 backdrop-blur-md border border-white/5;
+}
+
+.glass-input {
+  @apply bg-dark-secondary/50 backdrop-blur-sm border-white/10 focus:border-dark-accent;
+}
+
 body {
   @apply bg-dark-bg text-dark-text antialiased;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;

@@ -7,22 +7,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        'dark-bg': '#000000',
-        'dark-surface': '#0A0A0A',
-        'dark-primary': '#121212',
-        'dark-secondary': '#1A1A1A',
-        'dark-accent': 'var(--user-accent-color, #FF0000)',
-        'dark-accent-hover': '#CC0000',
-        'dark-text': '#FFFFFF',
-        'dark-text-secondary': '#A0A0A0',
-        'light-bg': '#FFFFFF',
-        'light-surface': '#F5F5F5',
-        'light-primary': '#E5E5E5',
-        'light-secondary': '#D4D4D4',
-        'light-accent': 'var(--user-accent-color, #FF0000)',
-        'light-accent-hover': '#CC0000',
-        'light-text': '#000000',
-        'light-text-secondary': '#404040',
+        'dark-bg': '#09090b', // Zinc 950 - softer than pure black
+        'dark-surface': '#18181b', // Zinc 900
+        'dark-primary': '#27272a', // Zinc 800
+        'dark-secondary': '#3f3f46', // Zinc 700
+        'dark-accent': 'var(--user-accent-color, #ef4444)', // Red-500 default
+        'dark-accent-hover': '#dc2626', // Red-600
+        'dark-text': '#fafafa', // Zinc 50
+        'dark-text-secondary': '#a1a1aa', // Zinc 400
+        'light-bg': '#ffffff',
+        'light-surface': '#f4f4f5', // Zinc 100
+        'light-primary': '#e4e4e7', // Zinc 200
+        'light-secondary': '#d4d4d8', // Zinc 300
+        'light-accent': 'var(--user-accent-color, #ef4444)',
+        'light-accent-hover': '#dc2626',
+        'light-text': '#18181b',
+        'light-text-secondary': '#52525b',
       },
       boxShadow: {
         glow: '0 0 20px rgba(255, 0, 0, 0.2)',
