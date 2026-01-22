@@ -4,7 +4,7 @@ import { View } from '../types';
 import {
   EditIcon, GraphIcon, SunIcon, MoonIcon, PlusIcon, SettingsIcon,
   FolderIcon, ChevronDownIcon, MessageSquareIcon, GitBranchIcon,
-  SearchIcon, ListIcon, DownloadIcon, BrainCircuitIcon
+  SearchIcon, ListIcon, DownloadIcon
 } from './icons';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { useStore } from '../store';
@@ -15,10 +15,19 @@ interface SidebarProps {
   onImport: () => void;
 }
 
+/**
+ * Logo Component
+ * Displays the Cogniflow brand logo image with hover effects
+ * The logo is loaded from the public directory for optimal caching
+ */
 const Logo = () => (
-  <div className="relative group">
+  <div className="relative group flex-shrink-0">
     <div className="absolute inset-0 bg-dark-accent/20 blur-xl rounded-full group-hover:bg-dark-accent/40 transition-all duration-500" />
-    <BrainCircuitIcon className="w-8 h-8 text-dark-accent relative z-10 transform group-hover:scale-110 transition-transform duration-300" />
+    <img 
+      src="/cogniflow-icon.png" 
+      alt="Cogniflow Logo" 
+      className="w-8 h-8 relative z-10 transform group-hover:scale-110 transition-transform duration-300 rounded-md"
+    />
   </div>
 );
 
@@ -68,6 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings, onExport, onImport })
       animate={{ x: 0, opacity: 1 }}
       className="bg-light-surface/50 dark:bg-dark-surface/50 backdrop-blur-xl border-r border-light-primary/20 dark:border-white/5 flex flex-col w-64 h-full flex-shrink-0"
     >
+      {/* Header with Logo and Brand Name */}
       <div className="p-4 flex items-center gap-3">
         <Logo />
         <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-light-text to-light-text-secondary dark:from-white dark:to-white/60 bg-clip-text text-transparent">
