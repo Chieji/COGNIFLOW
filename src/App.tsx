@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import Sidebar from './components/Sidebar';
+import SidebarEnhanced from './components/SidebarEnhanced';
 import SettingsModal from './components/SettingsModal';
 import { MainContent } from './components/MainContent';
 import { ErrorBoundary, setupGlobalErrorHandlers } from './components/ErrorBoundary';
@@ -10,6 +10,7 @@ import { useSharedNoteHandler } from './hooks/useSharedNoteHandler';
 import { handleAiAction } from './services/aiActionHandler';
 import { exportData, importData } from './utils/exportImport';
 import { mcpService } from './services/mcpService';
+import { Toaster } from './components/ui/toaster';
 
 // Setup global error handlers for unhandled errors
 setupGlobalErrorHandlers();
@@ -54,7 +55,7 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <div className="flex h-screen w-screen bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text font-sans">
-        <Sidebar
+        <SidebarEnhanced
           onOpenSettings={() => setIsSettingsOpen(true)}
           onExport={onExport}
           onImport={onImport}
@@ -69,6 +70,7 @@ const App: React.FC = () => {
           onSave={setSettings}
         />
         <OfflineIndicator />
+        <Toaster />
       </div>
     </ErrorBoundary>
   );

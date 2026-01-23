@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './index.css';
 import './styles/globals.css';
 import './styles/assistant-ui.css';
 import { registerSW } from 'virtual:pwa-register';

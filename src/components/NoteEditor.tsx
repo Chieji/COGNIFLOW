@@ -11,6 +11,10 @@ import { useStore } from '../store';
 import { SparklesIcon, PaperclipIcon, CameraIcon, MicIcon, XCircleIcon, BrainCircuitIcon, LoaderIcon, Volume2Icon, Share2Icon, MessageCircleIcon } from './icons';
 import { VersionHistory } from './VersionHistory';
 import { db } from '../db';
+import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Textarea } from './ui/textarea';
+import { useToast } from '../hooks/use-toast';
 
 interface NoteEditorProps {
     note: Note;
@@ -35,6 +39,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, settings, updateNote, onA
     const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
     const [showImageAnalyzer, setShowImageAnalyzer] = useState(false);
     const { notes: allNotes, setActiveNoteId } = useStore();
+    const { toast } = useToast();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isCapturing, setIsCapturing] = useState<'camera' | 'audio' | null>(null);
@@ -421,6 +426,10 @@ video.onerror = () => {
 
             navigator.clipboard.writeText(url);
             setIsLinkCopied(true);
+            toast({
+                title: "Link Copied!",
+                description: "Share link copied to clipboard",
+            });
             setTimeout(() => setIsLinkCopied(false), 2000);
         } catch (e) {
             console.error("Failed to create share link:", e);

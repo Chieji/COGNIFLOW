@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 248 250 252; /* slate-50 */
+    --foreground: 15 23 42; /* slate-900 */
+    --card: 255 255 255; /* white */
+    --card-foreground: 15 23 42; /* slate-900 */
+    --popover: 255 255 255; /* white */
+    --popover-foreground: 15 23 42; /* slate-900 */
+    --primary: 221 74 255; /* blue-500 - mapped to blue-600 equivalent */
+    --primary-foreground: 255 255 255; /* white */
+    --secondary: 226 232 240; /* slate-200 */
+    --secondary-foreground: 15 23 42; /* slate-900 */
+    --muted: 241 245 249; /* slate-100 */
+    --muted-foreground: 100 116 139; /* slate-500 */
+    --accent: 219 234 254; /* blue-50 */
+    --accent-foreground: 15 23 42; /* slate-900 */
+    --destructive: 239 68 68; /* red-500 */
+    --destructive-foreground: 255 255 255; /* white */
+    --border: 226 232 240; /* slate-200 */
+    --input: 226 232 240; /* slate-200 */
+    --ring: 221 74 255; /* blue-500 */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 2 6 23; /* slate-950 */
+    --foreground: 248 250 252; /* slate-50 */
+    --card: 15 23 42; /* slate-900 */
+    --card-foreground: 248 250 252; /* slate-50 */
+    --popover: 15 23 42; /* slate-900 */
+    --popover-foreground: 248 250 252; /* slate-50 */
+    --primary: 59 130 246; /* blue-500 */
+    --primary-foreground: 255 255 255; /* white */
+    --secondary: 30 41 59; /* slate-800 */
+    --secondary-foreground: 248 250 252; /* slate-50 */
+    --muted: 15 23 42; /* slate-900 */
+    --muted-foreground: 148 163 184; /* slate-400 */
+    --accent: 2 6 23; /* slate-950 */
+    --accent-foreground: 248 250 252; /* slate-50 */
+    --destructive: 239 68 68; /* red-500 */
+    --destructive-foreground: 255 255 255; /* white */
+    --border: 30 41 59; /* slate-800 */
+    --input: 30 41 59; /* slate-800 */
+    --ring: 59 130 246; /* blue-500 */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
