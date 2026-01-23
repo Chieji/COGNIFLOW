@@ -7,42 +7,63 @@
   [![NPM Version](https://img.shields.io/npm/v/@chieji/cogniflow?color=red&style=flat-square)](https://www.npmjs.com/package/@chieji/cogniflow)
   [![License](https://img.shields.io/github/license/Chieji/COGNIFLOW?style=flat-square&color=black)](LICENSE)
   [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-red.svg?style=flat-square)](CONTRIBUTING.md)
+  [![Status](https://img.shields.io/badge/status-production%20ready-brightgreen?style=flat-square)](#)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-blue?style=flat-square)](#)
+  [![React](https://img.shields.io/badge/React-18.2+-61dafb?style=flat-square)](#)
 </div>
 
 ---
 
 ## 🚀 Overview
 
-**COGNIFLOW** is a professional-grade application designed for developers, researchers, and power users to organize thoughts, code snippets, and research into an interconnected, AI-enhanced knowledge graph. It bridges the gap between structured note-taking and active development, providing a seamless environment for discovery and creation.
+**COGNIFLOW** is a professional-grade, AI-powered knowledge management system designed for developers, researchers, and power users. It seamlessly combines intelligent note-taking, code snippet management, and visual knowledge graph visualization into a unified platform. 
+
+With multimodal AI capabilities (voice, vision, text), offline-first architecture, and production-ready infrastructure, COGNIFLOW bridges the gap between structured organization and active development—enabling discovery, creation, and collaboration at scale.
 
 ## 📋 Project Status & Roadmap
 
-COGNIFLOW is currently in **Phase 3: Production Readiness**. See our [ROADMAP.md](ROADMAP.md) for detailed development plans and upcoming features.
+COGNIFLOW is currently in **Phase 3: Production Readiness** with 47 commits and active development. See our [ROADMAP.md](ROADMAP.md) for detailed development plans and upcoming features.
 
-**Recent Achievements:**
+**Recent Achievements (Phase 3):**
 
-- ✅ **PWA & Offline Mode**: Installable as a native app with full offline support.
-- ✅ **Voice-to-Note**: Real-time speech recognition for dictating notes.
-- ✅ **Visual Intelligence**: AI-powered image analysis and object detection.
-- ✅ **Smart Recommendations**: AI suggests tags, related notes, and next steps.
-- ✅ **Version History**: Auto-save and restore previous versions of notes.
-- ✅ **AI Chat Interface**: Professional UX with streaming responses.
-- ✅ **Knowledge Graph**: Interactive visualization of semantic connections.
+- ✅ **Shadcn/Radix UI Library**: 14+ production-ready components for enterprise UX
+- ✅ **Enhanced Sidebar**: SidebarEnhanced with improved navigation and organization
+- ✅ **API Rate Limiting**: Upstash Redis integration (10 req/10s) for security
+- ✅ **Toast Notifications**: Sonner-powered notification system with use-toast hook
+- ✅ **PWA & Offline Mode**: Installable as native app with full offline support
+- ✅ **Voice-to-Note**: Real-time speech recognition with auto-punctuation
+- ✅ **Visual Intelligence**: Gemini Vision for image analysis and object detection
+- ✅ **Smart Recommendations**: AI-driven tag suggestions and note linking
+- ✅ **Version History**: Auto-save with restore functionality
+- ✅ **Professional AI Chat**: streaming responses with assistant-ui
+- ✅ **Knowledge Graph**: D3.js-powered semantic visualization
+- ✅ **Customizable Themes**: Red/Black dark & White/Red light modes with accent colors
 
 **Next Priorities:**
 
-- 🔄 Cloud Backup Integration (Box.com/Drive)
-- 🔄 PDF Export
-- 🔄 Advanced Performance Monitoring
+- 🔄 Cloud Backup Integration (Box.com/Google Drive)
+- 🔄 PDF Export with formatting preservation
+- 🔄 Advanced Performance Monitoring & Analytics
+- 🔄 Multi-user Collaboration Features
+- 🔄 Plugin System for Extensibility
 
-## ✨ Latest Updates
+## ✨ Latest Updates (Phase 3)
 
-- **Progressive Web App (PWA)**: COGNIFLOW is now installable on desktop and mobile! It works offline, caching your notes and interface for zero-latency access anywhere.
-- **Voice & Vision**: We've added multimodal capabilities. You can now dictate notes using your microphone and analyze images using Gemini Vision.
-- **Smart Recommendations**: The AI now proactively helps you organize by suggesting tags and finding connections between your notes automatically.
-- **Professional AI Interface**: Integrated `assistant-ui` for a sophisticated, streaming chat experience with real-time feedback and advanced message threading.
-- **Modern Visual Identity**: Complete brand overhaul featuring a new high-fidelity logo, synchronized favicon, and a refined UI aesthetic.
-- **Customizable Themes**: Introducing a premium **Red & Black** dark mode and **White & Red** light mode with custom accent colors.
+### Jan 22, 2025 - Enterprise UI & Security Hardening
+- **Shadcn/Radix Component System**: Integrated 14+ production-ready components (badge, card, dialog, dropdown, input, label, select, separator, skeleton, switch, tabs, textarea, toast, toaster) for consistent, accessible UI
+- **API Rate Limiting**: Implemented Upstash Redis-backed rate limiting (10 requests/10 seconds) to protect against abuse and ensure fair resource usage
+- **Toast Notification System**: Integrated Sonner for elegant, customizable toast notifications with the `use-toast` hook
+- **Enhanced Sidebar**: New `SidebarEnhanced` component with improved navigation, organization, and visual hierarchy
+- **Input Validation**: Added Zod schema-based request validation in API proxy for security and type safety
+- **Utility Enhancements**: New `src/lib/utils.ts` with modern utility functions and Tailwind class merging
+
+### Recent Phases
+- **Progressive Web App (PWA)**: Installable on desktop and mobile with offline support and zero-latency access
+- **Multimodal AI**: Voice dictation and image analysis using Gemini Vision API
+- **Knowledge Graph**: Interactive D3.js visualization of note relationships and semantic connections
+- **Professional AI Chat**: Real-time streaming responses with sophisticated threading and formatting
+- **Smart Organization**: AI-powered tag suggestions and automatic note linking
+- **Custom Theming**: Red/Black dark mode and White/Red light mode with configurable accent colors
 
 ## 🛠 Key Features
 
@@ -55,6 +76,41 @@ COGNIFLOW is currently in **Phase 3: Production Readiness**. See our [ROADMAP.md
 | **Dev Studio** | Integrated environment for code snippets. | AI-powered code completion & debugging. |
 | **Smart Suggestions**| Context-aware recommendations for your notes. | Proactive tagging and linking. |
 | **Professional Chat** | Sophisticated conversational interface. | Real-time streaming with multiple providers. |
+| **Rate-Limited API** | Secure, production-grade API proxy with built-in protection. | Upstash Redis-powered rate limiting (10 req/10s). |
+
+## 🎯 Why COGNIFLOW?
+
+**Obsidian + ChatGPT + VS Code = COGNIFLOW**
+
+Unlike traditional note-taking apps, COGNIFLOW is built for the modern developer:
+
+🧠 **AI-First Architecture**
+- Not just storing notes—your knowledge actively helps you code and think better
+- Multiple AI provider support (Gemini, OpenAI, Anthropic, Hugging Face, Groq)
+- Works offline with local AI models via Ollama integration
+
+🎤 **Multimodal Input**
+- Voice dictation for hands-free note-taking
+- Image analysis for visual research and diagrams
+- Code-aware editor with AI assistance
+
+🔐 **Security & Privacy**
+- Secure API proxy—your keys never touch the client
+- Local-first architecture with IndexedDB storage
+- Rate limiting and input validation built-in
+- Vercel deployment-ready infrastructure
+
+⚡ **Developer-Friendly**
+- TypeScript + React 18 + Vite (ultra-fast)
+- Comprehensive test suite with Vitest
+- Docker support for reproducible environments
+- Production-grade component library (Shadcn/Radix UI)
+
+📦 **Enterprise-Ready**
+- PWA support for mobile and desktop installation
+- Offline-first with sync capabilities
+- Enterprise UI components and patterns
+- Extensible plugin architecture (coming soon)
 
 ## 💻 Technology Stack
 
@@ -63,6 +119,35 @@ COGNIFLOW is currently in **Phase 3: Production Readiness**. See our [ROADMAP.md
 - **State & DB**: Zustand, Dexie.js (IndexedDB)
 - **Visualization**: D3.js
 - **AI Runtimes**: Google Gemini, OpenAI, Anthropic, Hugging Face
+
+## ⚡ Quick Start
+
+Get COGNIFLOW running in 5 minutes:
+
+```bash
+# Clone the repository
+git clone https://github.com/Chieji/COGNIFLOW.git
+cd COGNIFLOW
+
+# Install dependencies
+npm install
+
+# Set up environment (optional for basic local testing)
+cp .env.example .env
+
+# Start development server
+npm run dev
+
+# Open http://localhost:5173 in your browser
+```
+
+That's it! Your intelligent second brain is ready. 🚀
+
+For API features (voice, vision, chat), add your API keys to `.env`:
+- Google Gemini
+- OpenAI
+- Anthropic Claude
+- Hugging Face (optional)
 
 ## 📥 Installation
 
